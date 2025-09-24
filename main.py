@@ -18,6 +18,13 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 MORALIS_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjE4MzllMjEzLWFiNTAtNDI5Ny1iMzM3LWVhZDM3MTE5OTJjMSIsIm9yZ0lkIjoiNDcyMjEzIiwidXNlcklkIjoiNDg1NzY4IiwidHlwZUlkIjoiNTE3NjkxZWQtMTlmZC00NTQ5LThjZjYtOWMxMDhlM2E0NTkwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg3Mjc4MTAsImV4cCI6NDkxNDQ4NzgxMH0.cWOzKINUOPnKRTz5mDJTmBS4JG5ScVu61DtWyMephHo"
 MORALIS_BASE_URL = "https://deep-index.moralis.io/api/v2.2"
 
+# Monitoring interval in minutes (300 = 5 hours for 40K CU/month plan)
+# Adjust based on your Moralis plan:
+# - 40K CU/month: 300 minutes (5 hours)
+# - 100K CU/month: 120 minutes (2 hours)
+# - 350K CU/month: 30 minutes
+MONITOR_INTERVAL_MINUTES = int(os.getenv("MONITOR_INTERVAL_MINUTES", "300"))
+
 # BSC BTCB Token and Pool addresses
 BTCB_ADDRESS = "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c"
 POOL_ADDRESS = "0x46cf1cf8c69595804ba91dfdd8d6b960c9b0a7c4"
@@ -953,9 +960,9 @@ class MoralisFinalMonitor:
         try:
             while True:
                 await self.monitor_cycle()
-                # logger.info(f"Waiting 60 seconds until next cycle...")
-                pass
-                await asyncio.sleep(60)  # Wait 1 minute
+                # Wait based on configured interval
+                logger.warning(f"Waiting {MONITOR_INTERVAL_MINUTES} minutes until next cycle (conserving API credits)")
+                await asyncio.sleep(MONITOR_INTERVAL_MINUTES * 60)
         finally:
             await self.close()
 
