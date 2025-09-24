@@ -508,8 +508,8 @@ class BSCPoolMonitor:
                         await conn.execute("""
                             INSERT INTO bsc_pool_metrics (
                                 pool_address, token0_reserve, token1_reserve,
-                                total_liquidity_usd, tvl, price_btcb_usdt, pool_ratio
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                                total_liquidity_usd, tvl, price_btcb_usdt, pool_ratio, timestamp
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                         """,
                             POOL_ADDRESS,
                             reserves["btcb_reserve"],
