@@ -8,7 +8,9 @@
       "Bash(timeout 30 python moralis_enhanced_monitor_fixed.py)",
       "Bash(python:*)",
       "Bash(timeout:*)",
-      "Bash(docker cp:*)"
+      "Bash(docker cp:*)",
+      "Bash(docker inspect:*)",
+      "Bash(docker ps:*)"
     ],
     "deny": [],
     "ask": []

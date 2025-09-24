@@ -1,0 +1,60 @@
+                                                                        Table "public.token_distribution"
+        Column         |            Type             | Collation | Nullable |                    Default                     | Storage | Compression | Stats target | Description 
+-----------------------+-----------------------------+-----------+----------+------------------------------------------------+---------+-------------+--------------+-------------
+ id                    | integer                     |           | not null | nextval('token_distribution_id_seq'::regclass) | plain   |             |              | 
+ top_10_concentration  | numeric(10,4)               |           |          |                                                | main    |             |              | 
+ top_50_concentration  | numeric(10,4)               |           |          |                                                | main    |             |              | 
+ top_100_concentration | numeric(10,4)               |           |          |                                                | main    |             |              | 
+ gini_coefficient      | numeric(10,4)               |           |          |                                                | main    |             |              | 
+ unique_holders        | integer                     |           |          |                                                | plain   |             |              | 
+ new_holders_24h       | integer                     |           |          |                                                | plain   |             |              | 
+ whale_count           | integer                     |           |          |                                                | plain   |             |              | 
+ timestamp             | timestamp without time zone |           |          | CURRENT_TIMESTAMP                              | plain   |             |              | 
+Indexes:
+    "token_distribution_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
+                                                                        Table "public.wash_trade_suspects"
+       Column        |            Type             | Collation | Nullable |                     Default                     | Storage  | Compression | Stats target | Description 
+---------------------+-----------------------------+-----------+----------+-------------------------------------------------+----------+-------------+--------------+-------------
+ id                  | integer                     |           | not null | nextval('wash_trade_suspects_id_seq'::regclass) | plain    |             |              | 
+ wallet_address      | character varying(42)       |           |          |                                                 | extended |             |              | 
+ related_wallets     | text[]                      |           |          |                                                 | extended |             |              | 
+ suspicious_tx_count | integer                     |           |          |                                                 | plain    |             |              | 
+ circular_volume     | numeric(30,2)               |           |          |                                                 | main     |             |              | 
+ detection_score     | numeric(5,2)                |           |          |                                                 | main     |             |              | 
+ evidence            | jsonb                       |           |          |                                                 | extended |             |              | 
+ detected_at         | timestamp without time zone |           |          | CURRENT_TIMESTAMP                               | plain    |             |              | 
+Indexes:
+    "wash_trade_suspects_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
+                                                                         Table "public.moralis_stats"
+         Column          |            Type             | Collation | Nullable |                  Default                  | Storage | Compression | Stats target | Description 
+-------------------------+-----------------------------+-----------+----------+-------------------------------------------+---------+-------------+--------------+-------------
+ id                      | integer                     |           | not null | nextval('moralis_stats_id_seq'::regclass) | plain   |             |              | 
+ timestamp               | timestamp without time zone |           |          | CURRENT_TIMESTAMP                         | plain   |             |              | 
+ total_holders           | integer                     |           |          |                                           | plain   |             |              | 
+ unique_wallets          | integer                     |           |          |                                           | plain   |             |              | 
+ total_volume_24h        | numeric(20,2)               |           |          |                                           | main    |             |              | 
+ total_transactions_24h  | integer                     |           |          |                                           | plain   |             |              | 
+ buy_volume_24h          | numeric(20,2)               |           |          |                                           | main    |             |              | 
+ sell_volume_24h         | numeric(20,2)               |           |          |                                           | main    |             |              | 
+ unique_buyers_24h       | integer                     |           |          |                                           | plain   |             |              | 
+ unique_sellers_24h      | integer                     |           |          |                                           | plain   |             |              | 
+ price_usd               | numeric(20,8)               |           |          |                                           | main    |             |              | 
+ market_cap              | numeric(20,2)               |           |          |                                           | main    |             |              | 
+ fully_diluted_valuation | numeric(20,2)               |           |          |                                           | main    |             |              | 
+ total_supply            | numeric(40,18)              |           |          |                                           | main    |             |              | 
+ circulating_supply      | numeric(40,18)              |           |          |                                           | main    |             |              | 
+ gini_coefficient        | numeric(5,4)                |           |          |                                           | main    |             |              | 
+ top10_concentration     | numeric(10,6)               |           |          |                                           | main    |             |              | 
+ top100_concentration    | numeric(10,6)               |           |          |                                           | main    |             |              | 
+ whale_count             | integer                     |           |          |                                           | plain   |             |              | 
+ dolphin_count           | integer                     |           |          |                                           | plain   |             |              | 
+ fish_count              | integer                     |           |          |                                           | plain   |             |              | 
+ shrimp_count            | integer                     |           |          |                                           | plain   |             |              | 
+Indexes:
+    "moralis_stats_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+

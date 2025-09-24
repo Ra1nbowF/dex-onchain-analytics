@@ -1,150 +1,9 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "grafana-postgresql-datasource",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
-  },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
-  "liveNow": false,
+  "title": "Combined DEX On-Chain Analytics",
+  "uid": "combined-dex-analytics",
   "panels": [
     {
-      "datasource": "grafana-postgresql-datasource",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1000000
-              },
-              {
-                "color": "green",
-                "value": 10000000
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": "grafana-postgresql-datasource",
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  liquidity_usd as \"Liquidity\"\nFROM moralis_pair_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "Pool Liquidity (USD)",
-      "type": "stat"
-    },
-    {
-      "datasource": "grafana-postgresql-datasource",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": "grafana-postgresql-datasource",
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  usd_price as \"Price\"\nFROM moralis_pair_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "BTCB Price (USD)",
-      "type": "stat"
-    },
-    {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -174,12 +33,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
-        "x": 12,
+        "x": 0,
         "y": 0
       },
-      "id": 3,
+      "id": 1,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
@@ -195,36 +54,183 @@
         "text": {},
         "textMode": "auto"
       },
+      "pluginVersion": "8.0.0",
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  volume_24h as \"Volume\"\nFROM moralis_pair_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  tvl as \"TVL\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
-      "title": "24h Volume",
+      "title": "Total Value Locked (TVL)",
       "type": "stat"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 3,
+          "decimals": 2,
           "mappings": [],
-          "max": 1,
+          "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
                 "color": "green",
+                "value": 45
+              },
+              {
+                "color": "yellow",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource-1",
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  pool_ratio * 100 as \"BTCB Ratio %\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
+        }
+      ],
+      "title": "Pool Balance Ratio (BTCB %)",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource-1",
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  price_btcb_usdt as \"BTCB Price\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
+        }
+      ],
+      "title": "BTCB/USDT Price",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
                 "value": null
               },
               {
@@ -232,8 +238,8 @@
                 "value": 0.6
               },
               {
-                "color": "red",
-                "value": 0.8
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -242,7 +248,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
         "x": 18,
         "y": 0
@@ -263,22 +269,27 @@
         "text": {},
         "textMode": "auto"
       },
+      "pluginVersion": "8.0.0",
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  gini_coefficient as \"Gini\"\nFROM moralis_holder_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  gini_coefficient as \"Gini\"\nFROM token_distribution\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 1",
+          "refId": "A",
+          "select": [],
+          "table": "token_distribution",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
       "title": "Gini Coefficient",
       "type": "stat"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -287,123 +298,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Volume (USD)",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 50,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Buy Volume"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Sell Volume"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 4
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "grafana-postgresql-datasource",
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  total_buy_volume_1h as \"Buy Volume\",\n  total_sell_volume_1h as \"Sell Volume\"\nFROM moralis_token_analytics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
-          "refId": "A"
-        }
-      ],
-      "title": "Buy vs Sell Volume (1h)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "grafana-postgresql-datasource",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Count",
+            "axisLabel": "TVL ($)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -422,7 +317,108 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource-1",
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  tvl as \"TVL\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
+        }
+      ],
+      "title": "TVL Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Amount",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -436,13 +432,30 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "USDT"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 5
       },
       "id": 6,
       "options": {
@@ -462,20 +475,24 @@
       },
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  total_buyers_24h as \"Buyers\",\n  total_sellers_24h as \"Sellers\"\nFROM moralis_token_analytics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  token0_reserve as \"BTCB\",\n  token1_reserve as \"USDT\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
-      "title": "Unique Buyers vs Sellers (24h)",
+      "title": "Pool Reserves",
       "type": "timeseries"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -484,7 +501,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Percentage (%)",
+            "axisLabel": "Price (USDT)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -504,31 +521,25 @@
             },
             "showPoints": "never",
             "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
             "thresholdsStyle": {
-              "mode": "line"
+              "mode": "off"
             }
           },
           "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "percent"
+          "unit": "currencyUSD"
         },
         "overrides": []
       },
@@ -536,7 +547,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 13
       },
       "id": 7,
       "options": {
@@ -544,6 +555,7 @@
           "calcs": [
             "lastNotNull",
             "mean",
+            "min",
             "max"
           ],
           "displayMode": "table",
@@ -557,20 +569,24 @@
       },
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  top_10_supply_pct as \"Top 10\",\n  top_25_supply_pct as \"Top 25\",\n  top_50_supply_pct as \"Top 50\",\n  top_100_supply_pct as \"Top 100\"\nFROM moralis_holder_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  price_btcb_usdt as \"BTCB/USDT Price\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
-      "title": "Token Distribution (% Held by Top Holders)",
+      "title": "BTCB Price History",
       "type": "timeseries"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -579,7 +595,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Price Change (%)",
+            "axisLabel": "Ratio (%)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -598,15 +614,40 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "green",
+                "value": 45
+              },
+              {
+                "color": "yellow",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 60
               }
             ]
           },
@@ -618,7 +659,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 13
       },
       "id": 8,
       "options": {
@@ -640,20 +681,24 @@
       },
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  timestamp AS \"time\",\n  price_change_5m as \"5min\",\n  price_change_1h as \"1hour\",\n  price_change_24h as \"24hour\"\nFROM moralis_pair_stats\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp AS \"time\",\n  pool_ratio * 100 as \"BTCB Ratio\",\n  (1 - pool_ratio) * 100 as \"USDT Ratio\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
-      "title": "Price Changes",
+      "title": "Pool Balance Ratio History",
       "type": "timeseries"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -676,7 +721,67 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Profit %"
+              "options": "TVL"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Price"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "BTCB"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "USDT"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ratio %"
             },
             "properties": [
               {
@@ -690,82 +795,18 @@
               {
                 "id": "custom.displayMode",
                 "value": "gradient-gauge"
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "red",
-                      "value": null
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 0
-                    },
-                    {
-                      "color": "green",
-                      "value": 10
-                    }
-                  ]
-                }
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Trades"
+              "options": "Timestamp"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 80
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Avg Buy"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
-              },
-              {
-                "id": "decimals",
-                "value": 2
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Avg Sell"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
-              },
-              {
-                "id": "decimals",
-                "value": 2
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Current Holdings"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 4
+                "value": 200
               }
             ]
           }
@@ -775,7 +816,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 21
       },
       "id": 9,
       "options": {
@@ -783,32 +824,708 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Profit %"
+            "displayName": "Timestamp"
           }
         ]
       },
       "pluginVersion": "8.0.0",
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": "grafana-postgresql-datasource-1",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  wallet_address as \"Wallet\",\n  realized_profit_pct as \"Profit %\",\n  total_trades as \"Trades\",\n  avg_buy_price as \"Avg Buy\",\n  avg_sell_price as \"Avg Sell\",\n  current_holdings as \"Current Holdings\"\nFROM moralis_profitable_wallets\nWHERE timestamp = (SELECT MAX(timestamp) FROM moralis_profitable_wallets)\nORDER BY realized_profit_pct DESC\nLIMIT 20",
-          "refId": "A"
+          "rawSql": "SELECT \n  timestamp as \"Timestamp\",\n  tvl as \"TVL\",\n  price_btcb_usdt as \"Price\",\n  token0_reserve as \"BTCB\",\n  token1_reserve as \"USDT\",\n  pool_ratio * 100 as \"Ratio %\"\nFROM bsc_pool_metrics\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
+          "refId": "A",
+          "select": [],
+          "table": "bsc_pool_metrics",
+          "timeColumn": "timestamp",
+          "where": []
         }
       ],
-      "title": "Top Profitable Wallets",
+      "title": "Recent Pool Metrics",
       "type": "table"
     },
     {
-      "datasource": "grafana-postgresql-datasource",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 10,
+      "type": "text",
+      "options": {
+        "content": "# 📊 Moralis Token Analytics Dashboard - BTCB/USDT",
+        "mode": "markdown"
+      }
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 11,
+      "type": "text",
+      "options": {
+        "content": "## Token Holder Statistics",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 31
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_holders FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Holders",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 31
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "percent"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT top10_supply_percent FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Concentration",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 31
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT whales FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Whales 🐋",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 31
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT holder_change_24h FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Holder Change",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 31
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT holders_by_swap FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Holders via Swaps",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 31
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT shrimps FROM moralis_holder_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Shrimps 🦐",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 18,
+      "type": "text",
+      "options": {
+        "content": "## Pair Statistics & Liquidity",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 36
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "currencyUSD"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT current_usd_price FROM moralis_pair_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Price (USD)",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 36
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "currencyUSD"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_liquidity_usd FROM moralis_pair_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Liquidity",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 36
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "percent"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT price_change_24h FROM moralis_pair_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Price Change",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 36
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "currencyUSD"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_volume_24h FROM moralis_pair_stats_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Volume",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "id": 23,
+      "type": "text",
+      "options": {
+        "content": "## Historical Holder Analysis",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 41
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT\n  timestamp as time,\n  total_holders as \"Total Holders\",\n  net_holder_change as \"Net Change\"\nFROM moralis_historical_holders_correct\nWHERE timestamp > NOW() - INTERVAL '7 days'\nORDER BY timestamp",
+          "refId": "A"
+        }
+      ],
+      "title": "Historical Holder Trends",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "id": 25,
+      "options": {
+        "displayLabels": [
+          "percent",
+          "name"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "values": true,
+          "limit": 10,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^count$/"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT \n  'Whales' as category, whales as count\nFROM moralis_holder_stats_correct\nWHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Sharks', sharks FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Dolphins', dolphins FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Fish', fish FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Octopus', octopus FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Crabs', crabs FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)\nUNION ALL\nSELECT 'Shrimps', shrimps FROM moralis_holder_stats_correct WHERE timestamp = (SELECT MAX(timestamp) FROM moralis_holder_stats_correct)",
+          "refId": "A"
+        }
+      ],
+      "title": "Holder Distribution Categories",
+      "type": "piechart"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "id": 26,
+      "type": "text",
+      "options": {
+        "content": "## Swap Transactions & Trading Activity",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT\n  DATE_TRUNC('hour', block_timestamp) as time,\n  SUM(CASE WHEN transaction_type = 'buy' THEN total_value_usd ELSE 0 END) as \"Buy Volume\",\n  SUM(CASE WHEN transaction_type = 'sell' THEN total_value_usd ELSE 0 END) as \"Sell Volume\"\nFROM moralis_swaps_correct\nWHERE block_timestamp > NOW() - INTERVAL '24 hours'\nGROUP BY 1\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Buy vs Sell Volume (24h)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
       "fieldConfig": {
         "defaults": {
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -826,12 +1543,503 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "Value USD"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "id": 28,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value USD"
+          }
+        ]
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT\n  transaction_type as \"Type\",\n  wallet_address_label as \"Wallet Label\",\n  entity as \"Entity\",\n  pair_label as \"Pair\",\n  exchange_name as \"Exchange\",\n  total_value_usd as \"Value USD\",\n  block_timestamp as \"Time\"\nFROM moralis_swaps_correct\nWHERE wallet_address_label IS NOT NULL OR entity IS NOT NULL\nORDER BY block_timestamp DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Labeled Entity Swaps",
+      "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "id": 29,
+      "type": "text",
+      "options": {
+        "content": "## Token Analytics Overview",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 59
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "currencyUSD"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_buy_volume_24h FROM moralis_token_analytics_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Buy Volume",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 59
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "unit": "currencyUSD"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_sell_volume_24h FROM moralis_token_analytics_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Sell Volume",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 59
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_buyers_24h FROM moralis_token_analytics_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Unique Buyers",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 59
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT total_sellers_24h FROM moralis_token_analytics_correct ORDER BY timestamp DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "24h Unique Sellers",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 63
+      },
+      "id": 34,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT\n  timestamp as time,\n  total_buyers_24h as \"Buyers\",\n  total_sellers_24h as \"Sellers\",\n  total_buys_24h as \"Buy Transactions\",\n  total_sells_24h as \"Sell Transactions\"\nFROM moralis_token_analytics_correct\nWHERE timestamp > NOW() - INTERVAL '7 days'\nORDER BY timestamp",
+          "refId": "A"
+        }
+      ],
+      "title": "Buyer/Seller Activity Trends",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Realized Profit"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 63
+      },
+      "id": 35,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Realized Profit"
+          }
+        ]
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT\n  wallet_address as \"Wallet\",\n  avg_buy_price_usd as \"Avg Buy\",\n  avg_sell_price_usd as \"Avg Sell\",\n  count_of_trades as \"Trades\",\n  realized_profit_usd as \"Realized Profit\",\n  total_usd_invested as \"Total Invested\"\nFROM moralis_top_gainers\nORDER BY realized_profit_usd DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Profitable Traders",
+      "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 71
+      },
+      "id": 36,
+      "type": "text",
+      "options": {
+        "content": "# 🚀 Moralis Rich Data Analytics - BTCB/USDT on BSC",
+        "mode": "markdown"
+      }
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 72
+      },
+      "id": 37,
+      "type": "text",
+      "options": {
+        "content": "## 💱 Recent Swap Transactions (Real-time)",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total USD"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bought USD"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sold USD"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Type"
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "color-text"
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
               },
               {
                 "id": "mappings",
@@ -840,16 +2048,193 @@
                     "options": {
                       "buy": {
                         "color": "green",
-                        "index": 0
+                        "index": 0,
+                        "text": "🟢 BUY"
                       },
                       "sell": {
                         "color": "red",
-                        "index": 1
+                        "index": 1,
+                        "text": "🔴 SELL"
                       }
                     },
                     "type": "value"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wallet"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "View on BSCScan",
+                    "url": "https://bscscan.com/address/${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bought Amount"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 6
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sold Amount"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 6
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 73
+      },
+      "id": 38,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ],
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "Total USD"
+          ]
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT\n  block_timestamp as \"Time\",\n  transaction_type as \"Type\",\n  SUBSTRING(wallet_address, 1, 6) || '...' || SUBSTRING(wallet_address, LENGTH(wallet_address) - 3) as \"Wallet\",\n  wallet_address_label as \"Label\",\n  entity as \"Entity\",\n  CASE \n    WHEN transaction_type = 'buy' THEN bought_name\n    ELSE sold_name\n  END as \"Token\",\n  bought_amount as \"Bought Amount\",\n  bought_usd_amount as \"Bought USD\",\n  sold_amount as \"Sold Amount\",\n  sold_usd_amount as \"Sold USD\",\n  total_value_usd as \"Total USD\",\n  exchange_name as \"Exchange\",\n  pair_label as \"Pair\",\n  transaction_hash as \"Tx Hash\"\nFROM moralis_swaps_correct\nORDER BY block_timestamp DESC\nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Recent Swap Transactions (Last 50)",
+      "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 83
+      },
+      "id": 39,
+      "type": "text",
+      "options": {
+        "content": "## 💰 Top Token Holders (Actual Addresses & Balances)",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Holder Address"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 350
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "View on BSCScan",
+                    "url": "https://bscscan.com/address/${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Balance"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 8
+              },
+              {
+                "id": "unit",
+                "value": "short"
               }
             ]
           },
@@ -872,21 +2257,198 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "From Amount"
+              "options": "% of Supply"
             },
             "properties": [
               {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
                 "id": "decimals",
-                "value": 6
+                "value": 4
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "To Amount"
+              "options": "Type"
             },
             "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "blue",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "whale": {
+                        "color": "purple",
+                        "index": 0,
+                        "text": "🐋 Whale"
+                      },
+                      "shark": {
+                        "color": "blue",
+                        "index": 1,
+                        "text": "🦈 Shark"
+                      },
+                      "dolphin": {
+                        "color": "cyan",
+                        "index": 2,
+                        "text": "🐬 Dolphin"
+                      },
+                      "fish": {
+                        "color": "green",
+                        "index": 3,
+                        "text": "🐠 Fish"
+                      },
+                      "shrimp": {
+                        "color": "orange",
+                        "index": 4,
+                        "text": "🦐 Shrimp"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Rank"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 84
+      },
+      "id": 40,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Rank"
+          }
+        ],
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "Balance",
+            "USD Value"
+          ]
+        }
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT\n  ROW_NUMBER() OVER (ORDER BY balance DESC) as \"Rank\",\n  holder_address as \"Holder Address\",\n  balance_formatted as \"Balance\",\n  balance_formatted * 113000 as \"USD Value\",\n  percentage_of_supply as \"% of Supply\",\n  holder_type as \"Type\"\nFROM moralis_holders\nORDER BY balance DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "🏆 Top 100 Token Holders",
+      "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 94
+      },
+      "id": 41,
+      "type": "text",
+      "options": {
+        "content": "## 📈 Trading Statistics by Wallet",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Volume"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Trade Size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
               {
                 "id": "decimals",
                 "value": 2
@@ -896,12 +2458,38 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Time"
+              "options": "Net Flow"
             },
             "properties": [
               {
-                "id": "custom.width",
-                "value": 180
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -909,11 +2497,119 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 28
+        "y": 95
       },
-      "id": 10,
+      "id": 42,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Total Volume"
+          }
+        ]
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT\n  SUBSTRING(wallet_address, 1, 6) || '...' || SUBSTRING(wallet_address, LENGTH(wallet_address) - 3) as \"Wallet\",\n  COUNT(*) as \"Trades\",\n  COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as \"Buys\",\n  COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as \"Sells\",\n  SUM(total_value_usd) as \"Total Volume\",\n  AVG(total_value_usd) as \"Avg Trade Size\",\n  COALESCE(wallet_address_label, entity, 'Unknown') as \"Identity\",\n  SUM(CASE WHEN transaction_type = 'buy' THEN bought_usd_amount ELSE -sold_usd_amount END) as \"Net Flow\"\nFROM moralis_swaps_correct\nGROUP BY wallet_address, wallet_address_label, entity\nORDER BY \"Total Volume\" DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Top Traders by Volume",
+      "type": "table"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "From"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "View on BSCScan",
+                    "url": "https://bscscan.com/address/${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "To"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "View on BSCScan",
+                    "url": "https://bscscan.com/address/${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 95
+      },
+      "id": 43,
       "options": {
         "showHeader": true,
         "sortBy": [
@@ -923,26 +2619,449 @@
           }
         ]
       },
-      "pluginVersion": "8.0.0",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
-          "datasource": "grafana-postgresql-datasource",
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
           "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT \n  block_timestamp as \"Time\",\n  transaction_type as \"Type\",\n  from_wallet as \"From Wallet\",\n  from_amount as \"From Amount\",\n  to_amount as \"To Amount\",\n  usd_value as \"USD Value\",\n  exchange_name as \"Exchange\"\nFROM moralis_swaps\nWHERE $__timeFilter(block_timestamp)\nORDER BY block_timestamp DESC\nLIMIT 100",
+          "rawSql": "SELECT\n  block_timestamp as \"Time\",\n  SUBSTRING(from_address, 1, 8) || '...' as \"From\",\n  SUBSTRING(to_address, 1, 8) || '...' as \"To\",\n  value / POWER(10, 18) as \"Amount\",\n  (value / POWER(10, 18)) * 113000 as \"Value\",\n  transaction_hash as \"Tx Hash\"\nFROM moralis_transfers\nORDER BY block_timestamp DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
-      "title": "Recent Swaps",
+      "title": "💸 Recent Token Transfers",
       "type": "table"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 103
+      },
+      "id": 44,
+      "type": "text",
+      "options": {
+        "content": "## 🎯 Swap Analysis & Patterns",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 104
+      },
+      "id": 45,
+      "options": {
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "values": true,
+          "limit": 10,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^volume$/"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT \n  exchange_name as name,\n  SUM(total_value_usd) as volume\nFROM moralis_swaps_correct\nWHERE exchange_name IS NOT NULL\nGROUP BY exchange_name\nORDER BY volume DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "🏢 Volume by Exchange",
+      "type": "piechart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 104
+      },
+      "id": 46,
+      "options": {
+        "displayLabels": [
+          "name",
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "limit": 10,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^count$/"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT \n  CASE \n    WHEN bought_name = 'BTCB Token' THEN sold_name\n    ELSE bought_name\n  END as name,\n  COUNT(*) as count\nFROM moralis_swaps_correct\nGROUP BY 1\nORDER BY count DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "🪙 Trading Pairs Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1000000
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 104
+      },
+      "id": 47,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "showPercentChange": false
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT MAX(total_value_usd) FROM moralis_swaps_correct",
+          "refId": "A"
+        }
+      ],
+      "title": "💎 Largest Single Swap",
+      "type": "stat"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 112
+      },
+      "id": 48,
+      "type": "text",
+      "options": {
+        "content": "## 📉 Holder Flow Analysis",
+        "mode": "markdown"
+      }
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whales In"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whales Out"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 113
+      },
+      "id": 49,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT\n  timestamp as time,\n  holders_in_whales as \"Whales In\",\n  -holders_out_whales as \"Whales Out\",\n  holders_in_sharks as \"Sharks In\",\n  -holders_out_sharks as \"Sharks Out\",\n  holders_in_dolphins as \"Dolphins In\",\n  -holders_out_dolphins as \"Dolphins Out\"\nFROM moralis_historical_holders_correct\nWHERE timestamp > NOW() - INTERVAL '7 days'\nORDER BY timestamp",
+          "refId": "A"
+        }
+      ],
+      "title": "🐋 Holder Category Flow (In vs Out)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource-1",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 113
+      },
+      "id": 50,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "delta"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT\n  timestamp as time,\n  total_holders as \"Total Holders\",\n  net_holder_change as \"Net Change\",\n  new_holders_by_swap as \"New via Swaps\",\n  new_holders_by_transfer as \"New via Transfer\"\nFROM moralis_historical_holders_correct\nWHERE timestamp > NOW() - INTERVAL '30 days'\nORDER BY timestamp",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 Holder Growth & Acquisition",
+      "type": "timeseries"
     }
   ],
-  "refresh": "30s",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "grafana-postgresql-datasource-1",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "refresh": "10s",
   "schemaVersion": 36,
   "style": "dark",
-  "tags": ["bsc", "moralis", "btcb", "advanced"],
+  "tags": [
+    "combined",
+    "bsc",
+    "pancakeswap",
+    "defi",
+    "moralis"
+  ],
   "templating": {
     "list": []
   },
@@ -952,8 +3071,6 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Moralis BTCB Advanced Analytics",
-  "uid": "moralis-btcb-analytics",
   "version": 1,
   "weekStart": ""
 }

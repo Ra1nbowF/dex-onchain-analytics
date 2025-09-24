@@ -1,0 +1,109 @@
+                                                                    Table "public.market_manipulation_alerts"
+    Column    |            Type             | Collation | Nullable |                        Default                         | Storage  | Compression | Stats target | Description 
+--------------+-----------------------------+-----------+----------+--------------------------------------------------------+----------+-------------+--------------+-------------
+ id           | integer                     |           | not null | nextval('market_manipulation_alerts_id_seq'::regclass) | plain    |             |              | 
+ alert_type   | character varying(50)       |           |          |                                                        | extended |             |              | 
+ severity     | character varying(20)       |           |          |                                                        | extended |             |              | 
+ pair_address | character varying(42)       |           |          |                                                        | extended |             |              | 
+ description  | text                        |           |          |                                                        | extended |             |              | 
+ metrics      | jsonb                       |           |          |                                                        | extended |             |              | 
+ timestamp    | timestamp without time zone |           |          | CURRENT_TIMESTAMP                                      | plain    |             |              | 
+Indexes:
+    "market_manipulation_alerts_pkey" PRIMARY KEY, btree (id)
+    "idx_manipulation_timestamp" btree ("timestamp" DESC)
+Access method: heap
+
+                                                                      Table "public.moralis_token_analytics_enhanced"
+      Column      |            Type             | Collation | Nullable |                           Default                            | Storage  | Compression | Stats target | Description 
+------------------+-----------------------------+-----------+----------+--------------------------------------------------------------+----------+-------------+--------------+-------------
+ id               | integer                     |           | not null | nextval('moralis_token_analytics_enhanced_id_seq'::regclass) | plain    |             |              | 
+ token_address    | text                        |           |          |                                                              | extended |             |              | 
+ category_id      | text                        |           |          |                                                              | extended |             |              | 
+ buy_volume_5m    | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ buy_volume_1h    | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ buy_volume_6h    | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ buy_volume_24h   | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ sell_volume_5m   | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ sell_volume_1h   | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ sell_volume_6h   | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ sell_volume_24h  | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ buyers_5m        | integer                     |           |          |                                                              | plain    |             |              | 
+ buyers_1h        | integer                     |           |          |                                                              | plain    |             |              | 
+ buyers_6h        | integer                     |           |          |                                                              | plain    |             |              | 
+ buyers_24h       | integer                     |           |          |                                                              | plain    |             |              | 
+ sellers_5m       | integer                     |           |          |                                                              | plain    |             |              | 
+ sellers_1h       | integer                     |           |          |                                                              | plain    |             |              | 
+ sellers_6h       | integer                     |           |          |                                                              | plain    |             |              | 
+ sellers_24h      | integer                     |           |          |                                                              | plain    |             |              | 
+ buys_5m          | integer                     |           |          |                                                              | plain    |             |              | 
+ buys_1h          | integer                     |           |          |                                                              | plain    |             |              | 
+ buys_6h          | integer                     |           |          |                                                              | plain    |             |              | 
+ buys_24h         | integer                     |           |          |                                                              | plain    |             |              | 
+ sells_5m         | integer                     |           |          |                                                              | plain    |             |              | 
+ sells_1h         | integer                     |           |          |                                                              | plain    |             |              | 
+ sells_6h         | integer                     |           |          |                                                              | plain    |             |              | 
+ sells_24h        | integer                     |           |          |                                                              | plain    |             |              | 
+ liquidity_5m     | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ liquidity_1h     | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ liquidity_6h     | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ liquidity_24h    | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ fdv_5m           | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ fdv_1h           | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ fdv_6h           | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ fdv_24h          | numeric(20,2)               |           |          |                                                              | main     |             |              | 
+ price_change_5m  | numeric(10,6)               |           |          |                                                              | main     |             |              | 
+ price_change_1h  | numeric(10,6)               |           |          |                                                              | main     |             |              | 
+ price_change_6h  | numeric(10,6)               |           |          |                                                              | main     |             |              | 
+ price_change_24h | numeric(10,6)               |           |          |                                                              | main     |             |              | 
+ timestamp        | timestamp without time zone |           |          | CURRENT_TIMESTAMP                                            | plain    |             |              | 
+Indexes:
+    "moralis_token_analytics_enhanced_pkey" PRIMARY KEY, btree (id)
+    "idx_token_analytics_token" btree (token_address)
+    "moralis_token_analytics_enhanced_token_address_timestamp_key" UNIQUE CONSTRAINT, btree (token_address, "timestamp")
+Access method: heap
+
+                                                                     Table "public.wallet_pnl"
+     Column     |            Type             | Collation | Nullable |                Default                 | Storage  | Compression | Stats target | Description 
+----------------+-----------------------------+-----------+----------+----------------------------------------+----------+-------------+--------------+-------------
+ id             | integer                     |           | not null | nextval('wallet_pnl_id_seq'::regclass) | plain    |             |              | 
+ wallet_address | character varying(42)       |           |          |                                        | extended |             |              | 
+ token_address  | character varying(42)       |           |          |                                        | extended |             |              | 
+ total_bought   | numeric(40,18)              |           |          |                                        | main     |             |              | 
+ total_sold     | numeric(40,18)              |           |          |                                        | main     |             |              | 
+ avg_buy_price  | numeric(30,10)              |           |          |                                        | main     |             |              | 
+ avg_sell_price | numeric(30,10)              |           |          |                                        | main     |             |              | 
+ realized_pnl   | numeric(30,2)               |           |          |                                        | main     |             |              | 
+ unrealized_pnl | numeric(30,2)               |           |          |                                        | main     |             |              | 
+ trade_count    | integer                     |           |          |                                        | plain    |             |              | 
+ first_trade    | timestamp without time zone |           |          |                                        | plain    |             |              | 
+ last_trade     | timestamp without time zone |           |          |                                        | plain    |             |              | 
+ timestamp      | timestamp without time zone |           |          | CURRENT_TIMESTAMP                      | plain    |             |              | 
+Indexes:
+    "wallet_pnl_pkey" PRIMARY KEY, btree (id)
+    "idx_pnl_profit" btree (realized_pnl DESC)
+    "wallet_pnl_wallet_address_token_address_key" UNIQUE CONSTRAINT, btree (wallet_address, token_address)
+Access method: heap
+
+                                                                         Table "public.wash_trading_complete"
+        Column         |            Type             | Collation | Nullable |                      Default                      | Storage  | Compression | Stats target | Description 
+-----------------------+-----------------------------+-----------+----------+---------------------------------------------------+----------+-------------+--------------+-------------
+ id                    | integer                     |           | not null | nextval('wash_trading_complete_id_seq'::regclass) | plain    |             |              | 
+ wallet_address        | character varying(42)       |           |          |                                                   | extended |             |              | 
+ pair_address          | character varying(42)       |           |          |                                                   | extended |             |              | 
+ detection_type        | character varying(50)       |           |          |                                                   | extended |             |              | 
+ buy_count             | integer                     |           |          |                                                   | plain    |             |              | 
+ sell_count            | integer                     |           |          |                                                   | plain    |             |              | 
+ round_trips           | integer                     |           |          |                                                   | plain    |             |              | 
+ avg_hold_time_seconds | integer                     |           |          |                                                   | plain    |             |              | 
+ total_volume          | numeric(30,2)               |           |          |                                                   | main     |             |              | 
+ net_pnl               | numeric(30,2)               |           |          |                                                   | main     |             |              | 
+ time_window_minutes   | integer                     |           |          |                                                   | plain    |             |              | 
+ confidence_score      | numeric(5,2)                |           |          |                                                   | main     |             |              | 
+ related_wallets       | text[]                      |           |          |                                                   | extended |             |              | 
+ details               | jsonb                       |           |          |                                                   | extended |             |              | 
+ timestamp             | timestamp without time zone |           |          | CURRENT_TIMESTAMP                                 | plain    |             |              | 
+Indexes:
+    "wash_trading_complete_pkey" PRIMARY KEY, btree (id)
+    "idx_wash_trading_confidence" btree (confidence_score DESC)
+Access method: heap
+

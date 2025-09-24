@@ -1,0 +1,80 @@
+                                                                      Table "public.bsc_liquidity_events"
+      Column      |            Type             | Collation | Nullable |                     Default                      | Storage  | Compression | Stats target | Description 
+------------------+-----------------------------+-----------+----------+--------------------------------------------------+----------+-------------+--------------+-------------
+ id               | integer                     |           | not null | nextval('bsc_liquidity_events_id_seq'::regclass) | plain    |             |              | 
+ tx_hash          | character varying(66)       |           |          |                                                  | extended |             |              | 
+ event_type       | character varying(20)       |           |          |                                                  | extended |             |              | 
+ provider_address | character varying(42)       |           |          |                                                  | extended |             |              | 
+ btcb_amount      | numeric(40,18)              |           |          |                                                  | main     |             |              | 
+ usdt_amount      | numeric(40,18)              |           |          |                                                  | main     |             |              | 
+ lp_tokens        | numeric(40,18)              |           |          |                                                  | main     |             |              | 
+ share_of_pool    | numeric(10,4)               |           |          |                                                  | main     |             |              | 
+ timestamp        | timestamp without time zone |           |          |                                                  | plain    |             |              | 
+Indexes:
+    "bsc_liquidity_events_pkey" PRIMARY KEY, btree (id)
+    "bsc_liquidity_events_tx_hash_key" UNIQUE CONSTRAINT, btree (tx_hash)
+Access method: heap
+
+                                                                     Table "public.bsc_trades"
+     Column     |            Type             | Collation | Nullable |                Default                 | Storage  | Compression | Stats target | Description 
+----------------+-----------------------------+-----------+----------+----------------------------------------+----------+-------------+--------------+-------------
+ id             | integer                     |           | not null | nextval('bsc_trades_id_seq'::regclass) | plain    |             |              | 
+ tx_hash        | character varying(66)       |           |          |                                        | extended |             |              | 
+ block_number   | bigint                      |           |          |                                        | plain    |             |              | 
+ trader_address | character varying(42)       |           |          |                                        | extended |             |              | 
+ token_in       | character varying(42)       |           |          |                                        | extended |             |              | 
+ token_out      | character varying(42)       |           |          |                                        | extended |             |              | 
+ amount_in      | numeric(40,18)              |           |          |                                        | main     |             |              | 
+ amount_out     | numeric(40,18)              |           |          |                                        | main     |             |              | 
+ price          | numeric(20,8)               |           |          |                                        | main     |             |              | 
+ value_usd      | numeric(30,2)               |           |          |                                        | main     |             |              | 
+ gas_used       | bigint                      |           |          |                                        | plain    |             |              | 
+ slippage       | numeric(10,4)               |           |          |                                        | main     |             |              | 
+ is_buy         | boolean                     |           |          |                                        | plain    |             |              | 
+ timestamp      | timestamp without time zone |           |          |                                        | plain    |             |              | 
+Indexes:
+    "bsc_trades_pkey" PRIMARY KEY, btree (id)
+    "bsc_trades_tx_hash_key" UNIQUE CONSTRAINT, btree (tx_hash)
+    "idx_bsc_trades_timestamp" btree ("timestamp" DESC)
+    "idx_bsc_trades_trader" btree (trader_address)
+Access method: heap
+
+                                                                       Table "public.bsc_wallet_metrics"
+       Column       |            Type             | Collation | Nullable |                    Default                     | Storage  | Compression | Stats target | Description 
+--------------------+-----------------------------+-----------+----------+------------------------------------------------+----------+-------------+--------------+-------------
+ id                 | integer                     |           | not null | nextval('bsc_wallet_metrics_id_seq'::regclass) | plain    |             |              | 
+ wallet_address     | character varying(42)       |           |          |                                                | extended |             |              | 
+ btcb_balance       | numeric(40,18)              |           |          |                                                | main     |             |              | 
+ usdt_balance       | numeric(40,18)              |           |          |                                                | main     |             |              | 
+ lp_token_balance   | numeric(40,18)              |           |          |                                                | main     |             |              | 
+ total_trades       | integer                     |           |          | 0                                              | plain    |             |              | 
+ total_volume_usd   | numeric(30,2)               |           |          | 0                                              | main     |             |              | 
+ realized_pnl       | numeric(30,2)               |           |          | 0                                              | main     |             |              | 
+ unrealized_pnl     | numeric(30,2)               |           |          | 0                                              | main     |             |              | 
+ win_rate           | numeric(5,2)                |           |          |                                                | main     |             |              | 
+ avg_trade_size     | numeric(30,2)               |           |          |                                                | main     |             |              | 
+ first_seen         | timestamp without time zone |           |          |                                                | plain    |             |              | 
+ last_seen          | timestamp without time zone |           |          |                                                | plain    |             |              | 
+ is_mm_suspect      | boolean                     |           |          | false                                          | plain    |             |              | 
+ is_insider_suspect | boolean                     |           |          | false                                          | plain    |             |              | 
+ updated_at         | timestamp without time zone |           |          | CURRENT_TIMESTAMP                              | plain    |             |              | 
+Indexes:
+    "bsc_wallet_metrics_pkey" PRIMARY KEY, btree (id)
+    "idx_bsc_wallet_pnl" btree (realized_pnl DESC)
+    "idx_bsc_wallet_volume" btree (total_volume_usd DESC)
+Access method: heap
+
+                                                                       Table "public.chain_stats"
+       Column       |            Type             | Collation | Nullable |                 Default                 | Storage  | Compression | Stats target | Description 
+--------------------+-----------------------------+-----------+----------+-----------------------------------------+----------+-------------+--------------+-------------
+ id                 | integer                     |           | not null | nextval('chain_stats_id_seq'::regclass) | plain    |             |              | 
+ chain_name         | character varying(50)       |           | not null |                                         | extended |             |              | 
+ chain_id           | integer                     |           | not null |                                         | plain    |             |              | 
+ total_volume_24h   | numeric(30,2)               |           |          |                                         | main     |             |              | 
+ total_transactions | integer                     |           |          |                                         | plain    |             |              | 
+ active_wallets     | integer                     |           |          |                                         | plain    |             |              | 
+ timestamp          | timestamp without time zone |           |          | CURRENT_TIMESTAMP                       | plain    |             |              | 
+Indexes:
+    "chain_stats_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+
