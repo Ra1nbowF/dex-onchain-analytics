@@ -40,11 +40,36 @@ def run_bsc_monitor():
 def run_moralis_monitor():
     """Run Moralis monitor"""
     logger.info("Starting Moralis Monitor thread...")
+
+    # Try different monitor files in order of preference
+    monitor_files = [
+        "moralis_final_monitor.py",
+        "moralis_complete_monitor.py",
+        "moralis_enhanced_monitor.py",
+        "moralis_correct_monitor.py",
+        "moralis_bsc_monitor.py"
+    ]
+
+    # Find which monitor exists
+    monitor_to_use = None
+    for monitor in monitor_files:
+        if os.path.exists(monitor):
+            monitor_to_use = monitor
+            logger.info(f"Found Moralis monitor: {monitor}")
+            break
+
+    if not monitor_to_use:
+        logger.error("No Moralis monitor file found!")
+        logger.info("Available files in directory:")
+        for f in os.listdir('.'):
+            logger.info(f"  - {f}")
+        return
+
     while True:
         try:
-            logger.info("Launching moralis_final_monitor.py...")
+            logger.info(f"Launching {monitor_to_use}...")
             result = subprocess.run(
-                [sys.executable, "moralis_final_monitor.py"],
+                [sys.executable, monitor_to_use],
                 env=os.environ.copy(),
                 capture_output=True,
                 text=True
@@ -66,10 +91,12 @@ def main():
     logger.info(f"Working directory: {os.getcwd()}")
 
     # List files to debug
-    logger.info("Available Python files:")
-    for file in os.listdir('.'):
-        if file.endswith('.py'):
-            logger.info(f"  - {file}")
+    logger.info("Available files in /app:")
+    all_files = os.listdir('.')
+    py_files = [f for f in all_files if f.endswith('.py')]
+    logger.info(f"Total files: {len(all_files)}, Python files: {len(py_files)}")
+    for file in py_files:
+        logger.info(f"  - {file}")
 
     # Start monitors in threads
     bsc_thread = threading.Thread(target=run_bsc_monitor, daemon=True)
