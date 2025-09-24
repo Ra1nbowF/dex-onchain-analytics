@@ -15,8 +15,10 @@ import os
 from typing import Dict, List, Optional
 import logging
 
-logging.basicConfig(level=logging.INFO)
+# Reduce logging for Railway (rate limit: 500 logs/sec)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 # Configuration
 BSC_RPC = "https://bsc-dataseed1.binance.org/"

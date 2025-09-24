@@ -8,8 +8,10 @@ from decimal import Decimal
 import logging
 import json
 
-logging.basicConfig(level=logging.INFO)
+# Reduce logging for Railway (rate limit: 500 logs/sec)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 # Configuration - Use Railway DATABASE_URL if available
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/dex_analytics")
@@ -929,15 +931,15 @@ class MoralisFinalMonitor:
             snipers = await self.fetch_snipers(3)
             await self.store_snipers(snipers)
 
-            # Print API status summary
-            logger.info("\n" + "="*60)
-            logger.info("API Status Summary:")
+            # Print API status summary (reduced frequency)
+            # logger.info("\n" + "="*60)
+            # logger.info("API Status Summary:")
             for endpoint, status in self.api_status.items():
                 status_icon = "✅" if "working" in status or "calculated" in status or "using" in status else "❌"
-                logger.info(f"  {status_icon} {endpoint:20} - {status}")
+                pass  # logger.info(f"  {status_icon} {endpoint:20} - {status}")
 
-            logger.info("="*60)
-            logger.info(f"""
+            # logger.info("="*60)
+            # logger.info(f"""
 Monitoring cycle complete:
 - Swaps: {len(swaps)} transactions
 - Transfers: {len(transfers)} transactions
@@ -961,7 +963,8 @@ Monitoring cycle complete:
         try:
             while True:
                 await self.monitor_cycle()
-                logger.info(f"Waiting 60 seconds until next cycle...")
+                # logger.info(f"Waiting 60 seconds until next cycle...")
+                pass
                 await asyncio.sleep(60)  # Wait 1 minute
         finally:
             await self.close()
