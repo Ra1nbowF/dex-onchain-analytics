@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec:*)",
+      "Bash(winpty docker exec -it dex_postgres psql -U postgres -d dex_analytics -c \"\\dt\")",
+      "Bash(cat:*)",
+      "Bash(timeout 30 python moralis_enhanced_monitor.py)",
+      "Bash(timeout 30 python moralis_enhanced_monitor_fixed.py)",
+      "Bash(python:*)",
+      "Bash(timeout:*)",
+      "Bash(docker cp:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

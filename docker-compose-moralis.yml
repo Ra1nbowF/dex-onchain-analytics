@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  moralis_monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.moralis
+    container_name: moralis_btcb_monitor
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@dex_postgres:5432/dex_analytics
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - dex_network
+    restart: unless-stopped
+
+networks:
+  dex_network:
+    external: true
+    name: dex-onchain-analytics_dex_network

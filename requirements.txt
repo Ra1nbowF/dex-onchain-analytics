@@ -1,0 +1,10 @@
+# Core dependencies
+asyncpg==0.29.0
+aiohttp==3.9.1
+python-dotenv==1.0.0
+
+# For rate limiting
+aiolimiter==1.1.0
+
+# Redis for caching (optional)
+redis==5.0.1

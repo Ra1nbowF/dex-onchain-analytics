@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  bsc_monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bsc_pool_monitor
+    command: python bsc_pool_monitor.py
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@dex_postgres:5432/dex_analytics
+      ETHERSCAN_API_KEY: YZEHUAFGEUNSGKFQVVETB67299E24NMCPH
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - dex_network
+    restart: unless-stopped
+
+networks:
+  dex_network:
+    external: true
+    name: dex-onchain-analytics_dex_network

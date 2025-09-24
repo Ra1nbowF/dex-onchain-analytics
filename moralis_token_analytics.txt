@@ -1,0 +1,1077 @@
+Token
+
+
+GET
+/erc20/{address}/price
+Get ERC20 token price
+
+
+
+GET
+/erc20/{address}/swaps
+Get swap transactions by token address
+
+
+Get all swap transactions (buy/sell) for a specific ERC20 token.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+cursor
+string
+(query)
+The cursor returned in the previous response (used for getting the next page).
+
+cursor
+limit
+integer
+(query)
+The desired page size of the result.
+
+limit
+order
+string
+(query)
+The order of the result, in ascending (ASC) or descending (DESC)
+
+Available values : ASC, DESC
+
+Default value : DESC
+
+
+DESC
+fromBlock
+integer
+(query)
+The minimum block number from which to get the token transactions
+
+Provide the param 'from_block' or 'from_date'
+If 'from_date' and 'from_block' are provided, 'from_block' will be used.
+fromBlock
+toBlock
+string
+(query)
+The block number to get the token transactions from
+
+toBlock
+fromDate
+string
+(query)
+The start date from which to get the token transactions (format in seconds or datestring accepted by momentjs)
+
+Provide the param 'from_block' or 'from_date'
+If 'from_date' and 'from_block' are provided, 'from_block' will be used.
+fromDate
+toDate
+string
+(query)
+The end date from which to get the token transactions (format in seconds or datestring accepted by momentjs)
+
+Provide the param 'to_block' or 'to_date'
+If 'to_date' and 'to_block' are provided, 'to_block' will be used.
+toDate
+transactionTypes
+string
+(query)
+Array of transaction types. Allowed values are 'buy', 'sell'.
+
+transactionTypes
+address *
+string
+(path)
+The token address to get transaction for
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+Responses
+Code	Description	Links
+200	
+Returns swap transactions by wallet address.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "page": 2,
+  "page_size": 100,
+  "cursor": "string",
+  "result": [
+    {
+      "transactionHash": "0x2bfcba4715774420936669cd0ff2241d70e9abecab76c9db813602015b3134ad",
+      "transactionIndex": 1,
+      "transactionType": "buy",
+      "blockTimestamp": "2022-02-22T00:00:00Z",
+      "blockNumber": 21093423,
+      "subCategory": "accumulation",
+      "walletAddress": "0x2bfcba4715774420936669cd0ff2241d70e9abec",
+      "walletAddressLabel": "Murad Wallet",
+      "entity": "Murad",
+      "entityLogo": "https://entities-logos.s3.us-east-1.amazonaws.com/murad.png",
+      "pairAddress": "0x36a46dff597c5a444bbc521d26787f57867d2214",
+      "pairLabel": "BRETT/WETH",
+      "exchangeAddress": "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f",
+      "exchangeName": "Uniswap v2",
+      "exchangeLogo": "https://entities-logos.s3.us-east-1.amazonaws.com/uniswap.png",
+      "bought": {
+        "address": "0x003dde3494f30d861d063232c6a8c04394b686ff",
+        "name": "BRETT",
+        "symbol": "BRETT",
+        "logo": "https://cdn.moralis.io/tokens/0x0000000000085d4780b73119b644ae5ecd22b376.png",
+        "amount": "14811.98",
+        "usdPrice": 0.078634,
+        "usdAmount": 1155.33
+      },
+      "sold": {
+        "address": "0x003dde3494f30d861d063232c6a8c04394b686ff",
+        "name": "BRETT",
+        "symbol": "BRETT",
+        "logo": "https://cdn.moralis.io/tokens/0x0000000000085d4780b73119b644ae5ecd22b376.png",
+        "amount": "14811.98",
+        "usdPrice": 0.078634,
+        "usdAmount": 1155.33
+      },
+      "baseQuotePrice": "0.00003376480687",
+      "totalValueUsd": 1165
+    }
+  ]
+}
+No links
+
+GET
+/erc20/{tokenAddress}/holders
+Get a holders summary by token address
+
+
+Returns total holders for a given token, as well as aggregated stats holder supply, holder trends, holder distribution and holder acquisition metrics.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+tokenAddress *
+string
+(path)
+The token address to get transaction for
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+Responses
+Code	Description	Links
+200	
+Returns token holder summary result
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "totalHolders": 99999,
+  "holderSupply": {
+    "top10": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    },
+    "top25": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    },
+    "top50": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    },
+    "top100": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    },
+    "top250": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    },
+    "top500": {
+      "supply": "10",
+      "supplyPercent": 0.1
+    }
+  },
+  "holderChange": {
+    "5min": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "1h": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "6h": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "24h": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "3d": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "7d": {
+      "change": 10,
+      "changePercent": 0.1
+    },
+    "30d": {
+      "change": 10,
+      "changePercent": 0.1
+    }
+  },
+  "holdersByAcquisition": {
+    "swap": 10,
+    "transfer": 10,
+    "airdrop": 10
+  },
+  "holderDistribution": {
+    "whales": 100,
+    "sharks": 100,
+    "dolphins": 100,
+    "fish": 100,
+    "octopus": 100,
+    "crabs": 100,
+    "shrimps": 100
+  }
+}
+No links
+
+GET
+/erc20/{tokenAddress}/holders/historical
+Get timeseries holders data
+
+
+Track changes in the holder base of an ERC20 token over time. Supports timeseries data for total holders as well as change metrics such as holder distribution and holder acquisition.
+
+Parameters
+Cancel
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+
+eth
+fromDate *
+string
+(query)
+The starting date (format in seconds or datestring accepted by momentjs)
+
+2025-01-01T10:00:00
+toDate *
+string
+(query)
+The ending date (format in seconds or datestring accepted by momentjs)
+
+2025-02-01T11:00:00
+limit
+integer
+(query)
+The number of results to return
+
+limit
+cursor
+string
+(query)
+The cursor returned in the previous response (used for getting the next page)
+
+cursor
+timeFrame *
+string
+(query)
+The time frame to group the data by
+
+
+1d
+tokenAddress *
+string
+(path)
+The token address
+
+0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0
+Execute
+Responses
+Code	Description	Links
+200	
+Returns token
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "page": 1,
+  "pageSize": 100,
+  "cursor": "string",
+  "result": [
+    {
+      "timestamp": "2021-05-07T11:08:35.000Z",
+      "totalHolders": 100,
+      "netHolderChange": 0,
+      "holderPercentChange": 0,
+      "newHoldersByAcquisition": {
+        "swap": 10,
+        "transfer": 10,
+        "airdrop": 10
+      },
+      "holdersIn": {
+        "whales": 100,
+        "sharks": 100,
+        "dolphins": 100,
+        "fish": 100,
+        "octopus": 100,
+        "crabs": 100,
+        "shrimps": 100
+      },
+      "holdersOut": {
+        "whales": 100,
+        "sharks": 100,
+        "dolphins": 100,
+        "fish": 100,
+        "octopus": 100,
+        "crabs": 100,
+        "shrimps": 100
+      }
+    }
+  ]
+}
+No links
+
+POST
+/erc20/prices
+Get Multiple ERC20 token prices
+
+
+
+GET
+/erc20/{token_address}/owners
+Get ERC20 token owners by contract
+
+
+Identify the major holders of an ERC20 token and understand their ownership percentages. Includes known entities, exchanges and wallet labels.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+limit
+integer
+(query)
+The desired page size of the result.
+
+limit
+cursor
+string
+(query)
+The cursor returned in the previous response (used for getting the next page).
+
+cursor
+order
+string
+(query)
+The order of the result, in ascending (ASC) or descending (DESC)
+
+Available values : ASC, DESC
+
+Default value : DESC
+
+
+DESC
+token_address *
+string
+(path)
+The address of the token contract
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+Responses
+Code	Description	Links
+200	
+Returns a collection of owners of an ERC20 token
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "page": 2,
+  "page_size": 100,
+  "cursor": "string",
+  "total_supply": "string",
+  "result": [
+    {
+      "owner_address": "0x244...",
+      "owner_address_label": "Coinbase 1",
+      "balance": "57888888888888888888880",
+      "balance_formatted": "5.78",
+      "usd_value": "57888888888888888888880",
+      "is_contract": true,
+      "percentage_relative_to_total_supply": 10,
+      "entity": "Opensea",
+      "entity_logo": "https://opensea.io/favicon.ico"
+    }
+  ]
+}
+No links
+
+GET
+/{address}/erc20
+Get ERC20 token balances by wallet
+
+
+
+GET
+/{address}/erc20/transfers
+Get ERC20 token transfers by wallet address
+
+
+Get all ERC20 token transfers for a given wallet address, sorted by block number (newest first).
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+from_block
+integer
+(query)
+The minimum block number from which to get the transactions
+
+Provide the param 'from_block' or 'from_date'
+If 'from_date' and 'from_block' are provided, 'from_block' will be used.
+from_block
+to_block
+integer
+(query)
+The maximum block number from which to get the transactions.
+
+Provide the param 'to_block' or 'to_date'
+If 'to_date' and 'to_block' are provided, 'to_block' will be used.
+to_block
+from_date
+string
+(query)
+The start date from which to get the transactions (format in seconds or datestring accepted by momentjs)
+
+Provide the param 'from_block' or 'from_date'
+If 'from_date' and 'from_block' are provided, 'from_block' will be used.
+from_date
+to_date
+string
+(query)
+Get the transactions up to this date (format in seconds or datestring accepted by momentjs)
+
+Provide the param 'to_block' or 'to_date'
+If 'to_date' and 'to_block' are provided, 'to_block' will be used.
+to_date
+contract_addresses
+array[string]
+(query)
+List of contract addresses of transfers
+
+limit
+integer
+(query)
+The desired page size of the result.
+
+limit
+order
+string
+(query)
+The order of the result, in ascending (ASC) or descending (DESC)
+
+Available values : ASC, DESC
+
+Default value : DESC
+
+
+DESC
+cursor
+string
+(query)
+The cursor returned in the previous response (used for getting the next page).
+
+cursor
+address *
+string
+(path)
+The address of the wallet
+
+0xcB1C1FdE09f811B294172696404e88E658659905
+Responses
+Code	Description	Links
+200	
+Returns a collection of token transactions.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "page": 2,
+  "page_size": 100,
+  "cursor": "string",
+  "result": [
+    {
+      "token_name": "Tether USD",
+      "token_symbol": "USDT",
+      "token_logo": "cdn.moralis.io/325/large/Tether-logo.png?1598003707",
+      "token_decimals": "6",
+      "transaction_hash": "0x2d30ca6f024dbc1307ac8a1a44ca27de6f797ec22ef20627a1307243b0ab7d09",
+      "address": "0x057Ec652A4F150f7FF94f089A38008f49a0DF88e",
+      "block_timestamp": "2021-04-02T10:07:54.000Z",
+      "block_number": "12526958",
+      "block_hash": "0x0372c302e3c52e8f2e15d155e2c545e6d802e479236564af052759253b20fd86",
+      "to_address_entity": "Beaver Build",
+      "to_address_entity_logo": "https://beaverbuild.com/favicon.ico",
+      "to_address": "0x62AED87d21Ad0F3cdE4D147Fdcc9245401Af0044",
+      "to_address_label": "Binance 2",
+      "from_address_entity": "Opensea",
+      "from_address_entity_logo": "https://opensea.io/favicon.ico",
+      "from_address": "0xd4a3BebD824189481FC45363602b83C9c7e9cbDf",
+      "from_address_label": "Binance 1",
+      "value": "650000000000000000",
+      "transaction_index": 12,
+      "log_index": 2,
+      "possible_spam": false,
+      "verified_contract": false
+    }
+  ]
+}
+No links
+
+GET
+/erc20/metadata
+Get ERC20 token metadata by contract
+
+
+
+GET
+/tokens/categories
+Get ERC20 token categories
+
+
+
+GET
+/erc20/metadata/symbols
+Get ERC20 token metadata by symbols
+
+
+
+GET
+/erc20/{address}/transfers
+Get ERC20 token transfers by contract address
+
+
+
+GET
+/erc20/{address}/stats
+Get ERC20 token stats
+
+
+Get the total number of transfers for a given ERC20. For more detailed tokens stats we recommended to use getTokenAnalytics or getMultipleTokenAnalytics. For pair stats, we recommend to use getPairStats.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+address *
+string
+(path)
+The address of the erc20 token
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+Responses
+Code	Description	Links
+200	
+Returns the stats for the erc20 token.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transfers": {
+    "total": "1000"
+  }
+}
+No links
+
+GET
+/erc20/{address}/top-gainers
+Get top traders for a given ERC20 token
+
+
+List the most profitable wallets that have traded a specific ERC20 token.
+
+Parameters
+Try it out
+Name	Description
+address *
+string
+(path)
+The ERC20 token address.
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+days
+string
+(query)
+Timeframe in days for which profitability is calculated, Options include 'all', '7', '30' default is 'all'.
+
+days
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, mainnet, 0x1, matic, 0x89, polygon, bsc, binance, 0x38, fantom, ftm, 0xfa, arbitrum, 0xa4b1, optimism, 0xa, base, 0x2105, linea, 0xe708, 0x7e4, ronin
+
+
+eth
+Responses
+Code	Description	Links
+200	
+Successful response with top profitable wallets.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "name": "Kylin Network",
+  "symbol": "KYL",
+  "decimals": 18,
+  "logo": "https://cdn.moralis.io/eth/0x67b6d479c7bb412c54e03dca8e1bc6740ce6b99c.png",
+  "possible_spam": false,
+  "result": [
+    {
+      "avg_buy_price_usd": "string",
+      "avg_cost_of_quantity_sold": "string",
+      "avg_sell_price_usd": "string",
+      "count_of_trades": 0,
+      "realized_profit_percentage": 0,
+      "realized_profit_usd": "string",
+      "total_sold_usd": "string",
+      "total_tokens_bought": "string",
+      "total_tokens_sold": "string",
+      "total_usd_invested": "string",
+      "address": "string"
+    }
+  ]
+}
+No links
+
+GET
+/tokens/search
+Search for tokens based on contract address, pair address, token name or token symbol.
+
+
+
+GET
+/pairs/{address}/ohlcv
+Get OHLCV by pair address
+
+
+
+GET
+/pairs/{address}/stats
+Get stats by pair address
+
+
+Access key statistics for a token pair, such as price, buyers, sellers, liquidity, volume and more.
+
+Parameters
+Try it out
+Name	Description
+address *
+string
+(path)
+The pair address
+
+0xa43fe16908251ee70ef74718545e4fe6c5ccec9f
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+Responses
+Code	Description	Links
+200	
+Returns the pair stats.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "tokenAddress": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+  "tokenName": "Wrapped Ether",
+  "tokenSymbol": "WETH",
+  "tokenLogo": "https://cdn.moralis.io/coins/images/2518/large/weth.png?1595348880",
+  "pairCreated": "2021-04-02T10:07:54.000Z",
+  "pairLabel": "WETH/PEPE",
+  "pairAddress": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+  "exchange": "Uniswap v2",
+  "exchangeAddress": "0x101cc05f4a51c0319f570d5e146a8c625198e222",
+  "exchangeLogo": "uniswap.png",
+  "exchangeUrl": "app.uniswap.com",
+  "currentUsdPrice": "0.00000194",
+  "currentNativePrice": "0.0000000042",
+  "totalLiquidityUsd": "43345522",
+  "pricePercentChange": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "liquidityPercentChange": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "buys": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "sells": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "totalVolume": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "buyVolume": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "sellVolume": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "buyers": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  },
+  "sellers": {
+    "5min": 0,
+    "1h": 0,
+    "4h": 0,
+    "24h": 0
+  }
+}
+No links
+
+GET
+/erc20/{token_address}/pairs
+Get token pairs by address
+
+
+
+GET
+/erc20/{token_address}/pairs/stats
+Get aggregated token pair statistics by address
+
+
+
+GET
+/erc20/exchange/{exchangeName}/new
+Get new tokens by exchange
+
+
+
+GET
+/erc20/exchange/{exchangeName}/bonding
+Get bonding tokens by exchange
+
+
+
+GET
+/erc20/exchange/{exchangeName}/graduated
+Get graduated tokens by exchange
+
+
+
+GET
+/erc20/{tokenAddress}/bondingStatus
+Get the token bonding status
+
+
+
+GET
+/pairs/{address}/swaps
+Get swap transactions by pair address
+
+
+
+GET
+/pairs/{address}/snipers
+Get snipers by pair address
+
+
+Identify sniper wallets that bought a token within a specified timeframe (blocksAfterCreation). Each wallet returned includes detailed information about how much was bought, sold as well as PnL stats and more.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171
+
+Default value : eth
+
+
+eth
+blocksAfterCreation
+integer
+(query)
+Number of blocks after the creation
+
+Default value : 3
+
+3
+address *
+string
+(path)
+The pair address token-transactions are to be retrieved for.
+
+0xa3c2076eb97d573cc8842f1db1ecdf7b6f77ba27
+Responses
+Code	Description	Links
+200	
+Returns snipers by pair address.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transactionHash": "0x2bfcba4715774420936669cd0ff2241d70e9abecab76c9db813602015b3134ad",
+  "blockTimestamp": "2022-02-22T00:00:00Z",
+  "blockNumber": 21093423,
+  "result": [
+    {
+      "walletAddress": "0x2bfcba4715774420936669cd0ff2241d70e9abec",
+      "totalTokensSniped": 0,
+      "totalSnipedUsd": 0,
+      "totalSnipedTransactions": 0,
+      "totalTokensSold": 0,
+      "totalSoldUsd": 0,
+      "totalSellTransactions": 0,
+      "currentBalance": 0,
+      "currentBalanceUsdValue": 0,
+      "realizedProfitPercentage": 0,
+      "realizedProfitUsd": 0,
+      "snipedTransactions": [
+        {
+          "transactionHash": "0x2bfcba4715774420936669cd0ff2241d70e9abec",
+          "blocksAfterCreation": 0,
+          "transactionTimestamp": 0
+        }
+      ],
+      "sellTransactions": [
+        {
+          "transactionHash": "0x2bfcba4715774420936669cd0ff2241d70e9abec",
+          "blocksAfterCreation": 0,
+          "transactionTimestamp": 0
+        }
+      ]
+    }
+  ]
+}
+No links
+
+GET
+/volume/chains
+Get trading stats by chain
+
+
+
+GET
+/volume/categories
+Get trading stats by categories
+
+
+
+GET
+/volume/timeseries
+Retrieve timeseries trading stats by chain
+
+
+
+GET
+/volume/timeseries/{categoryId}
+Retrieve timeseries trading stats by category
+
+
+
+POST
+/tokens/analytics/timeseries
+Retrieve timeseries trading stats by token addresses
+
+
+
+GET
+/tokens/trending
+Get trending tokens
+
+
+
+GET
+/tokens/{tokenAddress}/analytics
+Get token analytics by token address
+
+
+Retrieve detailed trading analytics for a specific token, including buy volume, sell volume, buyers, sellers, transactions, liquidity and FDV trends over time.
+
+Parameters
+Try it out
+Name	Description
+chain
+string
+(query)
+The chain to query
+
+Available values : eth, 0x1, sepolia, 0xaa36a7, polygon, 0x89, bsc, 0x38, bsc testnet, 0x61, avalanche, 0xa86a, fantom, 0xfa, cronos, 0x19, arbitrum, 0xa4b1, chiliz, 0x15b38, chiliz testnet, 0x15b32, gnosis, 0x64, gnosis testnet, 0x27d8, base, 0x2105, base sepolia, 0x14a34, optimism, 0xa, holesky, 0x4268, polygon amoy, 0x13882, linea, 0xe708, moonbeam, 0x504, moonriver, 0x505, moonbase, 0x507, linea sepolia, 0xe705, flow, 0x2eb, flow-testnet, 0x221, ronin, 0x7e4, ronin-testnet, 0x7e5, lisk, 0x46f, lisk-sepolia, 0x106a, pulse, 0x171, solana
+
+Default value :
+
+
+--
+tokenAddress *
+string
+(path)
+The token address to query
+
+0x6982508145454ce325ddbe47a25d4ec3d2311933
+Responses
+Code	Description	Links
+200	
+Successful response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "categoryId": "0x1",
+  "totalBuyVolume": {
+    "5m": 6516719.425429553,
+    "1h": 137489621.30780438,
+    "6h": 585436101.0503464,
+    "24h": 2668170156.0409784
+  },
+  "totalSellVolume": {
+    "5m": 6516719.425429553,
+    "1h": 137489621.30780438,
+    "6h": 585436101.0503464,
+    "24h": 2668170156.0409784
+  },
+  "totalBuyers": {
+    "5m": 6516719.425429553,
+    "1h": 137489621.30780438,
+    "6h": 585436101.0503464,
+    "24h": 2668170156.0409784
+  },
+  "totalSellers": {
+    "5m": 6516719.425429553,
+    "1h": 137489621.30780438,
+    "6h": 585436101.0503464,
+    "24h": 2668170156.0409784
+  },
+  "totalBuys": {
+    "5m": 6516719.425429553,
