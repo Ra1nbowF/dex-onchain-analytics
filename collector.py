@@ -43,6 +43,7 @@ def run_moralis_monitor():
 
     # Try different monitor files in order of preference
     monitor_files = [
+        "main.py",  # Now contains moralis_final_monitor code
         "moralis_final_monitor.py",
         "moralis_complete_monitor.py",
         "moralis_enhanced_monitor.py",
