@@ -939,18 +939,8 @@ class MoralisFinalMonitor:
                 pass  # logger.info(f"  {status_icon} {endpoint:20} - {status}")
 
             # logger.info("="*60)
-            # logger.info(f"""
-Monitoring cycle complete:
-- Swaps: {len(swaps)} transactions
-- Transfers: {len(transfers)} transactions
-- Top Gainers: {len(top_gainers)} wallets
-- Pair Stats: {'✅' if pair_stats else '❌'}
-- Token Analytics: {'✅' if token_analytics else '❌'}
-- Token Stats: {'✅' if token_stats else '❌'}
-- Holder Stats: {holder_stats.get('totalHolders', 0) if holder_stats else 0} holders
-- Historical Holders: {len(historical_holders)} records
-- Snipers: {len(snipers)} wallets
-            """)
+            # Commented out verbose logging for Railway
+            # logger.info(f"Monitoring cycle complete")
 
         except Exception as e:
             logger.error(f"Error in monitoring cycle: {e}")
