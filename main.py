@@ -342,7 +342,85 @@ class MoralisFinalMonitor:
             self.api_status['historical_holders'] = 'exception'
             return []
 
-    # 9. GET SNIPERS BY PAIR ADDRESS - WORKING (but returns 0)
+    # 9. GET TOP TOKEN HOLDERS - For Top 100 Holders display
+    async def fetch_top_holders(self, limit: int = 100) -> List[Dict]:
+        """Fetch top token holders by balance"""
+        try:
+            # Use the swaps to identify unique holders and estimate balances
+            # Since there's no direct endpoint for current holders list
+            swaps = await self.fetch_token_swaps(1000)
+
+            if swaps:
+                # Calculate holder balances from swap history
+                holder_balances = {}
+
+                for swap in swaps:
+                    wallet = swap.get('wallet_address', '')
+                    if not wallet:
+                        continue
+
+                    if wallet not in holder_balances:
+                        holder_balances[wallet] = {
+                            'balance': 0,
+                            'buy_volume': 0,
+                            'sell_volume': 0,
+                            'trades': 0
+                        }
+
+                    # Simple balance tracking (bought - sold)
+                    if swap.get('type') == 'buy':
+                        holder_balances[wallet]['balance'] += float(swap.get('amount_token', 0))
+                        holder_balances[wallet]['buy_volume'] += float(swap.get('amount_usd', 0))
+                    else:
+                        holder_balances[wallet]['balance'] -= float(swap.get('amount_token', 0))
+                        holder_balances[wallet]['sell_volume'] += float(swap.get('amount_usd', 0))
+
+                    holder_balances[wallet]['trades'] += 1
+
+                # Convert to list and sort by balance
+                holders_list = []
+                total_supply = sum(h['balance'] for h in holder_balances.values() if h['balance'] > 0)
+
+                for wallet, data in holder_balances.items():
+                    if data['balance'] > 0:
+                        holders_list.append({
+                            'holder_address': wallet,
+                            'balance': data['balance'],
+                            'balance_formatted': data['balance'],
+                            'percentage_of_supply': (data['balance'] / total_supply * 100) if total_supply > 0 else 0,
+                            'holder_type': self.classify_holder_type(data['balance'], total_supply),
+                            'total_trades': data['trades']
+                        })
+
+                # Sort by balance and return top N
+                holders_list.sort(key=lambda x: x['balance'], reverse=True)
+                return holders_list[:limit]
+
+            return []
+
+        except Exception as e:
+            logger.error(f"Error fetching top holders: {e}")
+            return []
+
+    def classify_holder_type(self, balance: float, total_supply: float) -> str:
+        """Classify holder based on their balance"""
+        if total_supply == 0:
+            return "Unknown"
+
+        percentage = (balance / total_supply) * 100
+
+        if percentage >= 1:
+            return "Whale"
+        elif percentage >= 0.5:
+            return "Shark"
+        elif percentage >= 0.1:
+            return "Dolphin"
+        elif percentage >= 0.01:
+            return "Fish"
+        else:
+            return "Shrimp"
+
+    # 10. GET SNIPERS BY PAIR ADDRESS - WORKING (but returns 0)
     async def fetch_snipers(self, blocks_after_creation: int = 3) -> List[Dict]:
         """Identify sniper wallets that bought within specified timeframe"""
         try:
@@ -856,6 +934,36 @@ class MoralisFinalMonitor:
 
             logger.info(f"Stored {stored} historical holder records in database")
 
+    async def store_holders(self, holders: List[Dict]):
+        """Store top token holders"""
+        if not holders:
+            return
+
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("DELETE FROM moralis_holders")
+
+            stored = 0
+            for holder in holders:
+                try:
+                    await conn.execute("""
+                        INSERT INTO moralis_holders (
+                            holder_address, balance, balance_formatted,
+                            percentage_of_supply, holder_type, timestamp
+                        ) VALUES ($1, $2, $3, $4, $5, $6)
+                    """,
+                        holder.get('holder_address'),
+                        Decimal(str(holder.get('balance', 0))),
+                        Decimal(str(holder.get('balance_formatted', 0))),
+                        Decimal(str(holder.get('percentage_of_supply', 0))),
+                        holder.get('holder_type', 'Unknown'),
+                        datetime.utcnow()
+                    )
+                    stored += 1
+                except Exception as e:
+                    logger.error(f"Error storing holder: {e}")
+
+            logger.info(f"Stored {stored} top holders in database")
+
     async def store_snipers(self, snipers: List[Dict]):
         """Store sniper wallets"""
         if not snipers:
@@ -934,7 +1042,11 @@ class MoralisFinalMonitor:
             historical_holders = await self.fetch_historical_holders()
             await self.store_historical_holders(historical_holders)
 
-            # 9. Fetch and store snipers
+            # 9. Fetch and store top holders
+            top_holders = await self.fetch_top_holders(100)
+            await self.store_holders(top_holders)
+
+            # 10. Fetch and store snipers
             snipers = await self.fetch_snipers(3)
             await self.store_snipers(snipers)
 
