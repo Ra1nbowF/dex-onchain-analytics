@@ -430,7 +430,7 @@ class BSCPoolMonitor:
         """Fetch LP token transfer events using Web3 or BSCScan API"""
         try:
             # Try Web3 approach first if available
-            if Web3:
+            if Web3 is not None:
                 transfers = await self.fetch_lp_transfers_web3(hours)
                 if transfers:
                     return transfers
@@ -495,6 +495,10 @@ class BSCPoolMonitor:
     async def fetch_lp_transfers_web3(self, hours: int = 1) -> List[Dict]:
         """Fetch LP token transfers using Web3 directly"""
         try:
+            if Web3 is None:
+                logger.debug("Web3 not available")
+                return []
+
             # Use Web3 with public BSC RPC
             rpc_url = "https://bsc.publicnode.com"
             w3 = Web3(Web3.HTTPProvider(rpc_url))

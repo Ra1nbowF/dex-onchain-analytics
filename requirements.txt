@@ -8,3 +8,6 @@ aiolimiter==1.1.0
 
 # Redis for caching (optional)
 redis==5.0.1
+
+# Web3 for blockchain interaction
+web3==6.11.3
