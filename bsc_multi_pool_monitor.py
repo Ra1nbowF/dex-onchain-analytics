@@ -23,7 +23,7 @@ BSC_RPC = "https://bsc.publicnode.com"
 # Database connection for Railway
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5433/dex_analytics"  # Local DB for testing
+    "postgresql://postgres:kPviLOMOWTUlSEruerigidRXQYQYROWp@metro.proxy.rlwy.net:54031/railway"
 )
 
 # Pool configurations

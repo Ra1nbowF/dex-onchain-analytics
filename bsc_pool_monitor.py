@@ -30,7 +30,10 @@ logger.setLevel(logging.WARNING)
 BSC_RPC = "https://bsc-dataseed1.binance.org/"
 # Use BSCScan API key, fallback to Etherscan key if not set
 BSCSCAN_API_KEY = os.getenv("BSCSCAN_API_KEY", os.getenv("ETHERSCAN_API_KEY", "YZEHUAFGEUNSGKFQVVETB67299E24NMCPH"))
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/dex_analytics")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:kPviLOMOWTUlSEruerigidRXQYQYROWp@metro.proxy.rlwy.net:54031/railway"
+)
 
 # Contract addresses
 POOL_ADDRESS = "0x46cf1cf8c69595804ba91dfdd8d6b960c9b0a7c4"
