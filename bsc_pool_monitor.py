@@ -14,6 +14,10 @@ import json
 import os
 from typing import Dict, List, Optional
 import logging
+try:
+    from web3 import Web3
+except ImportError:
+    Web3 = None
 
 # Reduce logging for Railway (rate limit: 500 logs/sec)
 logging.basicConfig(level=logging.WARNING)
@@ -126,6 +130,56 @@ class BSCPoolMonitor:
                     timestamp TIMESTAMP
                 );
 
+                -- Token Transfer Tracking
+                CREATE TABLE IF NOT EXISTS bsc_token_transfers (
+                    id SERIAL PRIMARY KEY,
+                    tx_hash VARCHAR(66),
+                    block_number BIGINT,
+                    token_address VARCHAR(42),
+                    token_symbol VARCHAR(10),
+                    from_address VARCHAR(42),
+                    to_address VARCHAR(42),
+                    amount DECIMAL(40, 18),
+                    value_usd DECIMAL(30, 2),
+                    is_pool_related BOOLEAN DEFAULT FALSE,
+                    transfer_type VARCHAR(20), -- 'deposit', 'withdraw', 'transfer', 'mint', 'burn'
+                    gas_used BIGINT,
+                    timestamp TIMESTAMP,
+                    UNIQUE(tx_hash, token_address, from_address, to_address)
+                );
+
+                -- LP Token Tracking (Liquidity Provider tokens)
+                CREATE TABLE IF NOT EXISTS bsc_lp_token_transfers (
+                    id SERIAL PRIMARY KEY,
+                    tx_hash VARCHAR(66),
+                    block_number BIGINT,
+                    from_address VARCHAR(42),
+                    to_address VARCHAR(42),
+                    lp_amount DECIMAL(40, 18),
+                    btcb_amount DECIMAL(40, 18),
+                    usdt_amount DECIMAL(40, 18),
+                    total_value_usd DECIMAL(30, 2),
+                    transfer_type VARCHAR(20), -- 'mint' (add liquidity), 'burn' (remove liquidity), 'transfer'
+                    pool_share_percent DECIMAL(10, 6),
+                    timestamp TIMESTAMP,
+                    UNIQUE(tx_hash, from_address, to_address)
+                );
+
+                -- LP Token Holders
+                CREATE TABLE IF NOT EXISTS bsc_lp_holders (
+                    id SERIAL PRIMARY KEY,
+                    wallet_address VARCHAR(42) UNIQUE,
+                    lp_balance DECIMAL(40, 18),
+                    pool_share_percent DECIMAL(10, 6),
+                    btcb_value DECIMAL(40, 18),
+                    usdt_value DECIMAL(40, 18),
+                    total_value_usd DECIMAL(30, 2),
+                    first_provided TIMESTAMP,
+                    last_updated TIMESTAMP,
+                    total_deposits INTEGER DEFAULT 0,
+                    total_withdrawals INTEGER DEFAULT 0
+                );
+
                 -- Wallet tracking
                 CREATE TABLE IF NOT EXISTS bsc_wallet_metrics (
                     id SERIAL PRIMARY KEY,
@@ -200,16 +254,23 @@ class BSCPoolMonitor:
                 CREATE INDEX IF NOT EXISTS idx_bsc_wallet_volume ON bsc_wallet_metrics(total_volume_usd DESC);
                 CREATE INDEX IF NOT EXISTS idx_bsc_wallet_pnl ON bsc_wallet_metrics(realized_pnl DESC);
                 CREATE INDEX IF NOT EXISTS idx_pool_metrics_timestamp ON bsc_pool_metrics(timestamp DESC);
+                CREATE INDEX IF NOT EXISTS idx_token_transfers_timestamp ON bsc_token_transfers(timestamp DESC);
+                CREATE INDEX IF NOT EXISTS idx_token_transfers_from ON bsc_token_transfers(from_address);
+                CREATE INDEX IF NOT EXISTS idx_token_transfers_to ON bsc_token_transfers(to_address);
+                CREATE INDEX IF NOT EXISTS idx_token_transfers_pool ON bsc_token_transfers(is_pool_related) WHERE is_pool_related = TRUE;
+                CREATE INDEX IF NOT EXISTS idx_lp_transfers_timestamp ON bsc_lp_token_transfers(timestamp DESC);
+                CREATE INDEX IF NOT EXISTS idx_lp_transfers_type ON bsc_lp_token_transfers(transfer_type);
+                CREATE INDEX IF NOT EXISTS idx_lp_holders_balance ON bsc_lp_holders(lp_balance DESC);
+                CREATE INDEX IF NOT EXISTS idx_lp_holders_value ON bsc_lp_holders(total_value_usd DESC);
             """)
 
     async def fetch_pool_reserves(self) -> Dict:
         """Fetch current pool reserves from blockchain"""
         try:
-            url = "https://api.etherscan.io/v2/api"
+            url = "https://api.bscscan.com/api"
 
             # Get USDT balance in pool
             params = {
-                "chainid": "56",
                 "module": "account",
                 "action": "tokenbalance",
                 "contractaddress": USDT_ADDRESS,
@@ -257,9 +318,8 @@ class BSCPoolMonitor:
             blocks_per_hour = 1200  # ~3 seconds per block on BSC
             start_block = current_block - (hours * blocks_per_hour)
 
-            url = "https://api.etherscan.io/v2/api"
+            url = "https://api.bscscan.com/api"
             params = {
-                "chainid": "56",
                 "module": "logs",
                 "action": "getLogs",
                 "address": POOL_ADDRESS,
@@ -331,6 +391,454 @@ class BSCPoolMonitor:
         except Exception as e:
             logger.error(f"Error decoding swap event: {e}")
             return None
+
+    async def fetch_token_transfers(self, token_address: str, token_symbol: str, hours: int = 1) -> List[Dict]:
+        """Fetch recent transfer events for a specific token"""
+        try:
+            current_block = await self.get_current_block()
+            blocks_per_hour = 1200  # ~3 seconds per block on BSC
+            start_block = current_block - (hours * blocks_per_hour)
+
+            url = "https://api.bscscan.com/api"
+            params = {
+                "module": "logs",
+                "action": "getLogs",
+                "address": token_address,
+                "fromBlock": start_block,
+                "toBlock": current_block,
+                "topic0": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",  # Transfer event
+                "apikey": BSCSCAN_API_KEY
+            }
+
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                transfers = []
+
+                if data.get("result") and isinstance(data["result"], list):
+                    for log in data["result"]:
+                        transfer = await self.decode_transfer_event(log, token_address, token_symbol)
+                        if transfer:
+                            transfers.append(transfer)
+
+                return transfers
+        except Exception as e:
+            logger.error(f"Error fetching transfers for {token_symbol}: {e}")
+            return []
+
+    async def fetch_lp_token_transfers(self, hours: int = 1) -> List[Dict]:
+        """Fetch LP token transfer events using Web3 or BSCScan API"""
+        try:
+            # Try Web3 approach first if available
+            if Web3:
+                transfers = await self.fetch_lp_transfers_web3(hours)
+                if transfers:
+                    return transfers
+
+            # Fall back to BSCScan API
+            # Get current block number first
+            current_block = await self.get_current_block()
+            if not current_block:
+                # If BSCScan API fails, use BSC RPC as fallback
+                url = BSC_RPC
+                payload = {
+                    "jsonrpc": "2.0",
+                    "method": "eth_blockNumber",
+                    "params": [],
+                    "id": 1
+                }
+                async with self.session.post(url, json=payload) as response:
+                    result = await response.json()
+                    current_block = int(result["result"], 16)
+
+            # Use BSCScan API to get token transfers
+            url = "https://api.bscscan.com/api"
+
+            # Get ERC20 token transfers for the LP token
+            params = {
+                "module": "account",
+                "action": "tokentx",  # ERC20 token transfers
+                "contractaddress": POOL_ADDRESS,  # LP token contract address
+                "startblock": "0",
+                "endblock": "99999999",
+                "page": "1",
+                "offset": "100",  # Get last 100 transfers
+                "sort": "desc",
+                "apikey": BSCSCAN_API_KEY
+            }
+
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                transfers = []
+
+                if data.get("status") == "1" and data.get("result"):
+                    for tx in data["result"]:
+                        # Only process recent transfers
+                        tx_timestamp = int(tx.get("timeStamp", 0))
+                        current_time = datetime.utcnow().timestamp()
+                        hours_ago = current_time - (hours * 3600)
+
+                        if tx_timestamp < hours_ago:
+                            continue
+
+                        transfer = await self.decode_lp_transfer_from_api(tx)
+                        if transfer:
+                            transfers.append(transfer)
+
+                logger.info(f"Found {len(transfers)} LP token transfers in last {hours} hours")
+                return transfers
+
+        except Exception as e:
+            logger.error(f"Error fetching LP transfers: {e}")
+            return []
+
+    async def fetch_lp_transfers_web3(self, hours: int = 1) -> List[Dict]:
+        """Fetch LP token transfers using Web3 directly"""
+        try:
+            # Use Web3 with public BSC RPC
+            rpc_url = "https://bsc.publicnode.com"
+            w3 = Web3(Web3.HTTPProvider(rpc_url))
+
+            if not w3.is_connected():
+                logger.debug("Failed to connect to BSC RPC")
+                return []
+
+            # Calculate block range
+            latest_block = w3.eth.block_number
+            blocks_per_hour = 1200  # ~3 seconds per block on BSC
+            from_block = max(0, latest_block - (blocks_per_hour * hours))
+
+            # ERC20 Transfer event signature
+            transfer_topic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+            # Create filter for Transfer events
+            event_filter = {
+                'fromBlock': from_block,
+                'toBlock': latest_block,
+                'address': Web3.to_checksum_address(POOL_ADDRESS),
+                'topics': [transfer_topic]
+            }
+
+            # Get logs in small chunks to avoid rate limits
+            transfers = []
+            chunk_size = 50  # Small chunks for public RPC
+
+            # Only process last few hundred blocks to avoid rate limits
+            actual_from_block = max(from_block, latest_block - 200)
+
+            for start in range(actual_from_block, latest_block + 1, chunk_size):
+                end = min(start + chunk_size - 1, latest_block)
+                event_filter['fromBlock'] = start
+                event_filter['toBlock'] = end
+
+                try:
+                    logs = w3.eth.get_logs(event_filter)
+
+                    for log in logs:
+                        transfer = await self.decode_lp_transfer_from_web3(log, w3)
+                        if transfer:
+                            transfers.append(transfer)
+                except Exception as e:
+                    # Skip chunks that fail (rate limits, etc)
+                    logger.debug(f"Failed to fetch logs for blocks {start}-{end}: {e}")
+                    continue
+
+            if transfers:
+                logger.info(f"Found {len(transfers)} LP token transfers via Web3")
+            return transfers
+
+        except Exception as e:
+            logger.debug(f"Web3 fetch failed: {e}")
+            return []
+
+    async def decode_lp_transfer_from_web3(self, log: Dict, w3: Web3) -> Optional[Dict]:
+        """Decode LP token transfer from Web3 log"""
+        try:
+            # Decode from and to addresses from topics
+            from_address = "0x" + log['topics'][1].hex()[26:] if len(log['topics']) > 1 else "0x" + "0" * 40
+            to_address = "0x" + log['topics'][2].hex()[26:] if len(log['topics']) > 2 else "0x" + "0" * 40
+
+            # Decode amount from data
+            lp_amount = int(log['data'].hex(), 16) / 10**18
+
+            # Determine transfer type
+            transfer_type = "transfer"
+            if from_address.lower() == "0x" + "0" * 40:
+                transfer_type = "mint"  # Add liquidity
+            elif to_address.lower() == "0x" + "0" * 40:
+                transfer_type = "burn"  # Remove liquidity
+
+            # Get block timestamp
+            block = w3.eth.get_block(log['blockNumber'])
+            timestamp = datetime.fromtimestamp(block['timestamp'])
+
+            # Get current pool reserves to calculate value
+            reserves = await self.fetch_pool_reserves()
+            total_supply = await self.get_lp_total_supply()
+
+            # Calculate underlying token amounts
+            btcb_amount = 0
+            usdt_amount = 0
+            total_value_usd = 0
+            pool_share_percent = 0
+
+            if reserves and total_supply > 0:
+                pool_share = lp_amount / total_supply
+                pool_share_percent = pool_share * 100
+                btcb_amount = reserves["btcb_reserve"] * pool_share
+                usdt_amount = reserves["usdt_reserve"] * pool_share
+                total_value_usd = (btcb_amount * self.btcb_price) + (usdt_amount * self.usdt_price)
+
+            return {
+                "tx_hash": log['transactionHash'].hex(),
+                "block_number": log['blockNumber'],
+                "from_address": from_address,
+                "to_address": to_address,
+                "lp_amount": lp_amount,
+                "btcb_amount": btcb_amount,
+                "usdt_amount": usdt_amount,
+                "total_value_usd": total_value_usd,
+                "transfer_type": transfer_type,
+                "pool_share_percent": pool_share_percent,
+                "timestamp": timestamp
+            }
+        except Exception as e:
+            logger.debug(f"Error decoding LP transfer: {e}")
+            return None
+
+    async def decode_lp_transfer_from_api(self, tx: Dict) -> Optional[Dict]:
+        """Decode LP token transfer from BSCScan API response"""
+        try:
+            from_address = tx.get("from", "")
+            to_address = tx.get("to", "")
+            lp_amount = int(tx.get("value", 0)) / 10**int(tx.get("tokenDecimal", 18))
+
+            # Determine transfer type
+            transfer_type = "transfer"
+            if from_address.lower() == "0x" + "0" * 40:
+                transfer_type = "mint"  # Add liquidity
+            elif to_address.lower() == "0x" + "0" * 40:
+                transfer_type = "burn"  # Remove liquidity
+
+            # Get current pool reserves to calculate value
+            reserves = await self.fetch_pool_reserves()
+            total_supply = await self.get_lp_total_supply()
+
+            # Calculate underlying token amounts
+            btcb_amount = 0
+            usdt_amount = 0
+            total_value_usd = 0
+            pool_share_percent = 0
+
+            if reserves and total_supply > 0:
+                pool_share = lp_amount / total_supply
+                pool_share_percent = pool_share * 100
+                btcb_amount = reserves["btcb_reserve"] * pool_share
+                usdt_amount = reserves["usdt_reserve"] * pool_share
+                total_value_usd = (btcb_amount * self.btcb_price) + (usdt_amount * self.usdt_price)
+
+            return {
+                "tx_hash": tx.get("hash"),
+                "block_number": int(tx.get("blockNumber", 0)),
+                "from_address": from_address,
+                "to_address": to_address,
+                "lp_amount": lp_amount,
+                "btcb_amount": btcb_amount,
+                "usdt_amount": usdt_amount,
+                "total_value_usd": total_value_usd,
+                "transfer_type": transfer_type,
+                "pool_share_percent": pool_share_percent,
+                "timestamp": datetime.fromtimestamp(int(tx.get("timeStamp", 0)))
+            }
+        except Exception as e:
+            logger.error(f"Error decoding LP transfer: {e}")
+            return []
+
+    async def decode_lp_transfer_event(self, log: Dict) -> Optional[Dict]:
+        """Decode an LP token transfer event"""
+        try:
+            topics = log["topics"]
+
+            # Transfer event has 3 topics: event signature, from, to
+            if len(topics) < 3:
+                return None
+
+            from_address = "0x" + topics[1][-40:]
+            to_address = "0x" + topics[2][-40:]
+
+            # Decode amount from data
+            data = log["data"][2:]  # Remove 0x
+            lp_amount = int(data, 16) / 10**18  # LP tokens have 18 decimals
+
+            # Determine transfer type
+            transfer_type = "transfer"
+            if from_address.lower() == "0x" + "0" * 40:  # Mint (add liquidity)
+                transfer_type = "mint"
+            elif to_address.lower() == "0x" + "0" * 40:  # Burn (remove liquidity)
+                transfer_type = "burn"
+
+            # Get current pool reserves to calculate value
+            reserves = await self.fetch_pool_reserves()
+            total_supply = await self.get_lp_total_supply()
+
+            # Calculate underlying token amounts based on LP token share
+            btcb_amount = 0
+            usdt_amount = 0
+            total_value_usd = 0
+            pool_share_percent = 0
+
+            if reserves and total_supply > 0:
+                pool_share = lp_amount / total_supply
+                pool_share_percent = pool_share * 100
+                btcb_amount = reserves["btcb_reserve"] * pool_share
+                usdt_amount = reserves["usdt_reserve"] * pool_share
+                total_value_usd = (btcb_amount * self.btcb_price) + (usdt_amount * self.usdt_price)
+
+            return {
+                "tx_hash": log["transactionHash"],
+                "block_number": int(log["blockNumber"], 16),
+                "from_address": from_address,
+                "to_address": to_address,
+                "lp_amount": lp_amount,
+                "btcb_amount": btcb_amount,
+                "usdt_amount": usdt_amount,
+                "total_value_usd": total_value_usd,
+                "transfer_type": transfer_type,
+                "pool_share_percent": pool_share_percent,
+                "timestamp": datetime.fromtimestamp(int(log["timeStamp"], 16))
+            }
+        except Exception as e:
+            logger.error(f"Error decoding LP transfer event: {e}")
+            return None
+
+    async def get_lp_total_supply(self) -> float:
+        """Get total supply of LP tokens"""
+        try:
+            url = "https://api.bscscan.com/api"
+            params = {
+                "module": "stats",
+                "action": "tokensupply",
+                "contractaddress": POOL_ADDRESS,
+                "apikey": BSCSCAN_API_KEY
+            }
+
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                if data.get("status") == "1":
+                    return int(data["result"]) / 10**18
+            return 0
+        except Exception as e:
+            logger.error(f"Error fetching LP token supply: {e}")
+            return 0
+
+    async def decode_transfer_event(self, log: Dict, token_address: str, token_symbol: str) -> Optional[Dict]:
+        """Decode a transfer event log"""
+        try:
+            topics = log["topics"]
+
+            # Transfer event has 3 topics: event signature, from, to
+            if len(topics) < 3:
+                return None
+
+            from_address = "0x" + topics[1][-40:]
+            to_address = "0x" + topics[2][-40:]
+
+            # Decode amount from data
+            data = log["data"][2:]  # Remove 0x
+            amount = int(data, 16) / 10**18  # Assuming 18 decimals
+
+            # Determine transfer type
+            transfer_type = "transfer"
+            is_pool_related = False
+
+            if from_address.lower() == "0x" + "0" * 40:  # Mint
+                transfer_type = "mint"
+            elif to_address.lower() == "0x" + "0" * 40:  # Burn
+                transfer_type = "burn"
+            elif from_address.lower() == POOL_ADDRESS.lower():
+                transfer_type = "withdraw"
+                is_pool_related = True
+            elif to_address.lower() == POOL_ADDRESS.lower():
+                transfer_type = "deposit"
+                is_pool_related = True
+
+            # Calculate USD value
+            value_usd = 0
+            if token_symbol == "BTCB":
+                value_usd = amount * self.btcb_price
+            elif token_symbol == "USDT":
+                value_usd = amount * self.usdt_price
+
+            return {
+                "tx_hash": log["transactionHash"],
+                "block_number": int(log["blockNumber"], 16),
+                "token_address": token_address,
+                "token_symbol": token_symbol,
+                "from_address": from_address,
+                "to_address": to_address,
+                "amount": amount,
+                "value_usd": value_usd,
+                "is_pool_related": is_pool_related,
+                "transfer_type": transfer_type,
+                "gas_used": int(log.get("gasUsed", "0x0"), 16),
+                "timestamp": datetime.fromtimestamp(int(log["timeStamp"], 16))
+            }
+        except Exception as e:
+            logger.error(f"Error decoding transfer event: {e}")
+            return None
+
+    async def update_lp_holder(self, wallet_address: str):
+        """Update LP holder record with current balance and value"""
+        try:
+            # Get LP balance for this wallet
+            url = "https://api.bscscan.com/api"
+            params = {
+                "module": "account",
+                "action": "tokenbalance",
+                "contractaddress": POOL_ADDRESS,  # LP token is the pool itself
+                "address": wallet_address,
+                "tag": "latest",
+                "apikey": BSCSCAN_API_KEY
+            }
+
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                if data.get("status") != "1":
+                    return
+
+                lp_balance = int(data["result"]) / 10**18
+
+            # Get pool reserves and total supply
+            reserves = await self.fetch_pool_reserves()
+            total_supply = await self.get_lp_total_supply()
+
+            if reserves and total_supply > 0:
+                pool_share = lp_balance / total_supply
+                pool_share_percent = pool_share * 100
+                btcb_value = reserves["btcb_reserve"] * pool_share
+                usdt_value = reserves["usdt_reserve"] * pool_share
+                total_value_usd = (btcb_value * self.btcb_price) + (usdt_value * self.usdt_price)
+
+                async with self.db_pool.acquire() as conn:
+                    await conn.execute("""
+                        INSERT INTO bsc_lp_holders (
+                            wallet_address, lp_balance, pool_share_percent,
+                            btcb_value, usdt_value, total_value_usd,
+                            first_provided, last_updated
+                        ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                        ON CONFLICT (wallet_address) DO UPDATE SET
+                            lp_balance = EXCLUDED.lp_balance,
+                            pool_share_percent = EXCLUDED.pool_share_percent,
+                            btcb_value = EXCLUDED.btcb_value,
+                            usdt_value = EXCLUDED.usdt_value,
+                            total_value_usd = EXCLUDED.total_value_usd,
+                            last_updated = NOW()
+                    """,
+                        wallet_address, lp_balance, pool_share_percent,
+                        btcb_value, usdt_value, total_value_usd
+                    )
+
+        except Exception as e:
+            logger.error(f"Error updating LP holder {wallet_address}: {e}")
 
     async def calculate_wallet_pnl(self, wallet_address: str) -> Dict:
         """Calculate PnL for a specific wallet"""
@@ -478,9 +986,8 @@ class BSCPoolMonitor:
     async def get_current_block(self) -> int:
         """Get current BSC block number"""
         try:
-            url = "https://api.etherscan.io/v2/api"
+            url = "https://api.bscscan.com/api"
             params = {
-                "chainid": "56",
                 "module": "proxy",
                 "action": "eth_blockNumber",
                 "apikey": BSCSCAN_API_KEY
@@ -539,6 +1046,66 @@ class BSCPoolMonitor:
                             trade["value_usd"], trade["is_buy"],
                             trade["timestamp"]
                         )
+
+                # Fetch recent token transfers
+                btcb_transfers = await self.fetch_token_transfers(BTCB_ADDRESS, "BTCB", hours=1)
+                usdt_transfers = await self.fetch_token_transfers(USDT_ADDRESS, "USDT", hours=1)
+
+                # Store transfers
+                all_transfers = btcb_transfers + usdt_transfers
+                for transfer in all_transfers:
+                    try:
+                        async with self.db_pool.acquire() as conn:
+                            await conn.execute("""
+                                INSERT INTO bsc_token_transfers (
+                                    tx_hash, block_number, token_address, token_symbol,
+                                    from_address, to_address, amount, value_usd,
+                                    is_pool_related, transfer_type, gas_used, timestamp
+                                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                                ON CONFLICT (tx_hash, token_address, from_address, to_address) DO NOTHING
+                            """,
+                                transfer["tx_hash"], transfer["block_number"],
+                                transfer["token_address"], transfer["token_symbol"],
+                                transfer["from_address"], transfer["to_address"],
+                                transfer["amount"], transfer["value_usd"],
+                                transfer["is_pool_related"], transfer["transfer_type"],
+                                transfer["gas_used"], transfer["timestamp"]
+                            )
+                    except Exception as e:
+                        logger.error(f"Error storing transfer: {e}")
+
+                logger.info(f"Stored {len(trades)} trades and {len(all_transfers)} transfers")
+
+                # Fetch and store LP token transfers
+                lp_transfers = await self.fetch_lp_token_transfers(hours=1)
+                for lp_transfer in lp_transfers:
+                    try:
+                        async with self.db_pool.acquire() as conn:
+                            await conn.execute("""
+                                INSERT INTO bsc_lp_token_transfers (
+                                    tx_hash, block_number, from_address, to_address,
+                                    lp_amount, btcb_amount, usdt_amount, total_value_usd,
+                                    transfer_type, pool_share_percent, timestamp
+                                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                                ON CONFLICT (tx_hash, from_address, to_address) DO NOTHING
+                            """,
+                                lp_transfer["tx_hash"], lp_transfer["block_number"],
+                                lp_transfer["from_address"], lp_transfer["to_address"],
+                                lp_transfer["lp_amount"], lp_transfer["btcb_amount"],
+                                lp_transfer["usdt_amount"], lp_transfer["total_value_usd"],
+                                lp_transfer["transfer_type"], lp_transfer["pool_share_percent"],
+                                lp_transfer["timestamp"]
+                            )
+
+                            # Update LP holder records
+                            if lp_transfer["transfer_type"] in ["mint", "burn"]:
+                                wallet = lp_transfer["to_address"] if lp_transfer["transfer_type"] == "mint" else lp_transfer["from_address"]
+                                if wallet != "0x" + "0" * 40:  # Not null address
+                                    await self.update_lp_holder(wallet)
+                    except Exception as e:
+                        logger.error(f"Error storing LP transfer: {e}")
+
+                logger.info(f"Stored {len(lp_transfers)} LP token transfers")
 
                 # Detect wash trading
                 wash_traders = await self.detect_wash_trading()
