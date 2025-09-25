@@ -26,21 +26,31 @@ def run_bsc_monitor():
     while True:
         try:
             logger.info(f"Launching bsc_pool_monitor.py (attempt {retry_count + 1})...")
-            result = subprocess.run(
+            # BSC monitor runs continuously, don't use timeout
+            process = subprocess.Popen(
                 [sys.executable, "bsc_pool_monitor.py"],
                 env=os.environ.copy(),
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
             )
 
-            if result.returncode == 0:
-                logger.info("BSC Monitor completed successfully")
+            # Monitor the process
+            while process.poll() is None:
+                time.sleep(60)  # Check every minute
+                logger.debug("BSC Monitor is running...")
+
+            # Process exited
+            result = process.poll()
+
+            if result == 0:
+                logger.info("BSC Monitor exited successfully")
                 retry_count = 0
             else:
-                logger.error(f"BSC Monitor exited with code {result.returncode}")
-                if result.stderr:
-                    logger.error(f"BSC Monitor stderr: {result.stderr[:1000]}")
+                logger.error(f"BSC Monitor exited with code {result}")
+                stderr_output = process.stderr.read()
+                if stderr_output:
+                    logger.error(f"BSC Monitor stderr: {stderr_output[:1000]}")
                 retry_count += 1
 
             if retry_count >= max_retries:
@@ -50,9 +60,11 @@ def run_bsc_monitor():
             else:
                 time.sleep(30)  # Wait before restart
 
-        except subprocess.TimeoutExpired:
-            logger.warning("BSC Monitor timed out after 5 minutes, restarting...")
-            time.sleep(10)
+        except KeyboardInterrupt:
+            logger.info("BSC Monitor interrupted")
+            if 'process' in locals():
+                process.terminate()
+            break
         except Exception as e:
             logger.error(f"BSC Monitor exception: {e}")
             time.sleep(30)
@@ -91,21 +103,31 @@ def run_moralis_monitor():
     while True:
         try:
             logger.info(f"Launching {monitor_to_use} (attempt {retry_count + 1})...")
-            result = subprocess.run(
+            # Moralis monitor also runs continuously
+            process = subprocess.Popen(
                 [sys.executable, monitor_to_use],
                 env=os.environ.copy(),
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
             )
 
-            if result.returncode == 0:
-                logger.info("Moralis Monitor completed successfully")
+            # Monitor the process
+            while process.poll() is None:
+                time.sleep(60)  # Check every minute
+                logger.debug("Moralis Monitor is running...")
+
+            # Process exited
+            result = process.poll()
+
+            if result == 0:
+                logger.info("Moralis Monitor exited successfully")
                 retry_count = 0
             else:
-                logger.error(f"Moralis Monitor exited with code {result.returncode}")
-                if result.stderr:
-                    logger.error(f"Moralis Monitor stderr: {result.stderr[:1000]}")
+                logger.error(f"Moralis Monitor exited with code {result}")
+                stderr_output = process.stderr.read()
+                if stderr_output:
+                    logger.error(f"Moralis Monitor stderr: {stderr_output[:1000]}")
                 retry_count += 1
 
             if retry_count >= max_retries:
@@ -115,9 +137,11 @@ def run_moralis_monitor():
             else:
                 time.sleep(30)  # Wait before restart
 
-        except subprocess.TimeoutExpired:
-            logger.warning("Moralis Monitor timed out after 5 minutes, restarting...")
-            time.sleep(10)
+        except KeyboardInterrupt:
+            logger.info("Moralis Monitor interrupted")
+            if 'process' in locals():
+                process.terminate()
+            break
         except Exception as e:
             logger.error(f"Moralis Monitor exception: {e}")
             time.sleep(30)
