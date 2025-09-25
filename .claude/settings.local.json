@@ -17,7 +17,12 @@
       "Bash(git commit:*)",
       "Bash(git rm:*)",
       "Bash(psql:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(docker start:*)",
+      "Bash(winpty docker exec -it dex_postgres psql -U postgres -d dex_analytics -c \"SELECT ''Pair Stats'' as source, total_volume_24h as volume_24h, timestamp FROM moralis_pair_stats_correct ORDER BY timestamp DESC LIMIT 1;\")",
+      "Bash(grep:*)",
+      "WebFetch(domain:docs.bscscan.com)",
+      "WebFetch(domain:docs.etherscan.io)"
     ],
     "deny": [],
     "ask": []

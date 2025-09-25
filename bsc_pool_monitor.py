@@ -31,6 +31,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 
 # Contract addresses
 POOL_ADDRESS = "0x46cf1cf8c69595804ba91dfdd8d6b960c9b0a7c4"
+LP_TOKEN_ADDRESS = "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"  # LP token is separate from pool
 BTCB_ADDRESS = "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c"
 USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955"
 PANCAKE_FACTORY = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
@@ -457,7 +458,7 @@ class BSCPoolMonitor:
             params = {
                 "module": "account",
                 "action": "tokentx",  # ERC20 token transfers
-                "contractaddress": POOL_ADDRESS,  # LP token contract address
+                "contractaddress": LP_TOKEN_ADDRESS,  # Correct LP token address
                 "startblock": "0",
                 "endblock": "99999999",
                 "page": "1",
@@ -514,7 +515,7 @@ class BSCPoolMonitor:
             event_filter = {
                 'fromBlock': from_block,
                 'toBlock': latest_block,
-                'address': Web3.to_checksum_address(POOL_ADDRESS),
+                'address': Web3.to_checksum_address(LP_TOKEN_ADDRESS),  # LP token, not pool
                 'topics': [transfer_topic]
             }
 
@@ -717,7 +718,7 @@ class BSCPoolMonitor:
             params = {
                 "module": "stats",
                 "action": "tokensupply",
-                "contractaddress": POOL_ADDRESS,
+                "contractaddress": LP_TOKEN_ADDRESS,  # LP token, not pool
                 "apikey": BSCSCAN_API_KEY
             }
 
@@ -794,7 +795,7 @@ class BSCPoolMonitor:
             params = {
                 "module": "account",
                 "action": "tokenbalance",
-                "contractaddress": POOL_ADDRESS,  # LP token is the pool itself
+                "contractaddress": LP_TOKEN_ADDRESS,  # Separate LP token contract
                 "address": wallet_address,
                 "tag": "latest",
                 "apikey": BSCSCAN_API_KEY
