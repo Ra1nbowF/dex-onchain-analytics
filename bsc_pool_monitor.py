@@ -14,6 +14,8 @@ import json
 import os
 from typing import Dict, List, Optional
 import logging
+import signal
+import sys
 try:
     from web3 import Web3
 except ImportError:
@@ -83,7 +85,15 @@ class BSCPoolMonitor:
 
     async def initialize(self):
         """Initialize database and API connections"""
-        self.db_pool = await asyncpg.create_pool(DATABASE_URL)
+        # Create pool with connection limits to prevent too many connections
+        self.db_pool = await asyncpg.create_pool(
+            DATABASE_URL,
+            min_size=2,
+            max_size=10,
+            command_timeout=60,
+            max_queries=50000,
+            max_inactive_connection_lifetime=300
+        )
         self.session = aiohttp.ClientSession()
         await self.create_tables()
         logger.info("BSC Pool Monitor initialized")
@@ -1160,9 +1170,21 @@ class BSCPoolMonitor:
 
 async def main():
     monitor = BSCPoolMonitor()
+
+    # Setup signal handlers for graceful shutdown
+    def signal_handler(sig, frame):
+        logger.info("Received shutdown signal, cleaning up...")
+        asyncio.create_task(monitor.cleanup())
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
     try:
         await monitor.initialize()
         await monitor.monitor_pool()
+    except Exception as e:
+        logger.error(f"Monitor error: {e}")
     finally:
         await monitor.cleanup()
 

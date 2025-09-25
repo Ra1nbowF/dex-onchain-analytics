@@ -6,6 +6,7 @@ import subprocess
 import threading
 import time
 import logging
+import signal
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def run_bsc_monitor():
             # Monitor the process
             while process.poll() is None:
                 time.sleep(60)  # Check every minute
-                logger.debug("BSC Monitor is running...")
+                # Don't log too frequently to avoid log spam
 
             # Process exited
             result = process.poll()
@@ -61,9 +62,12 @@ def run_bsc_monitor():
                 time.sleep(30)  # Wait before restart
 
         except KeyboardInterrupt:
-            logger.info("BSC Monitor interrupted")
-            if 'process' in locals():
-                process.terminate()
+            logger.info("BSC Monitor interrupted, sending SIGTERM for graceful shutdown...")
+            if 'process' in locals() and process.poll() is None:
+                process.terminate()  # Send SIGTERM for graceful shutdown
+                time.sleep(5)  # Give it time to cleanup
+                if process.poll() is None:
+                    process.kill()  # Force kill if still running
             break
         except Exception as e:
             logger.error(f"BSC Monitor exception: {e}")
@@ -115,7 +119,7 @@ def run_moralis_monitor():
             # Monitor the process
             while process.poll() is None:
                 time.sleep(60)  # Check every minute
-                logger.debug("Moralis Monitor is running...")
+                # Don't log too frequently to avoid log spam
 
             # Process exited
             result = process.poll()
@@ -138,9 +142,12 @@ def run_moralis_monitor():
                 time.sleep(30)  # Wait before restart
 
         except KeyboardInterrupt:
-            logger.info("Moralis Monitor interrupted")
-            if 'process' in locals():
-                process.terminate()
+            logger.info("Moralis Monitor interrupted, sending SIGTERM for graceful shutdown...")
+            if 'process' in locals() and process.poll() is None:
+                process.terminate()  # Send SIGTERM for graceful shutdown
+                time.sleep(5)  # Give it time to cleanup
+                if process.poll() is None:
+                    process.kill()  # Force kill if still running
             break
         except Exception as e:
             logger.error(f"Moralis Monitor exception: {e}")
