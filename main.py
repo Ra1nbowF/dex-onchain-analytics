@@ -15,7 +15,19 @@ logger.setLevel(logging.WARNING)
 
 # Configuration - Use Railway DATABASE_URL if available
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/dex_analytics")
-MORALIS_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjE4MzllMjEzLWFiNTAtNDI5Ny1iMzM3LWVhZDM3MTE5OTJjMSIsIm9yZ0lkIjoiNDcyMjEzIiwidXNlcklkIjoiNDg1NzY4IiwidHlwZUlkIjoiNTE3NjkxZWQtMTlmZC00NTQ5LThjZjYtOWMxMDhlM2E0NTkwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg3Mjc4MTAsImV4cCI6NDkxNDQ4NzgxMH0.cWOzKINUOPnKRTz5mDJTmBS4JG5ScVu61DtWyMephHo"
+
+# Multiple Moralis API keys for rotation (80K CU/day total)
+MORALIS_API_KEYS = [
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjE4MzllMjEzLWFiNTAtNDI5Ny1iMzM3LWVhZDM3MTE5OTJjMSIsIm9yZ0lkIjoiNDcyMjEzIiwidXNlcklkIjoiNDg1NzY4IiwidHlwZUlkIjoiNTE3NjkxZWQtMTlmZC00NTQ5LThjZjYtOWMxMDhlM2E0NTkwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg3Mjc4MTAsImV4cCI6NDkxNDQ4NzgxMH0.cWOzKINUOPnKRTz5mDJTmBS4JG5ScVu61DtWyMephHo",  # Key 1: 40K CU/day
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImEwZTY5NWEzLTMyMWYtNDg4ZC1hOWE5LTcwNTVkNDk4NmJjZiIsIm9yZ0lkIjoiMjM3NDkyIiwidXNlcklkIjoiMjM4OTk4IiwidHlwZUlkIjoiNjE0ZDkyZDYtOTdmNy00ZDVkLWJiZTktYTViY2UwYjBlZTNjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg2ODQwMDcsImV4cCI6NDkxNDQ0NDAwN30.Wf8nL2zhKaVk0AfobeiF3r57OM_qNYeR9Voc6nenRNk"   # Key 2: 40K CU/day
+]
+
+# Key rotation tracking
+current_key_index = 0
+key_usage_count = 0
+key_last_reset = datetime.utcnow()
+MAX_REQUESTS_PER_KEY = 3000  # Conservative limit per key per day
+
 MORALIS_BASE_URL = "https://deep-index.moralis.io/api/v2.2"
 
 # Monitoring interval in minutes
@@ -33,11 +45,15 @@ class MoralisFinalMonitor:
     def __init__(self):
         self.db_pool = None
         self.session = None
+        self.current_key_index = 0
+        self.key_usage_count = 0
+        self.key_last_reset = datetime.utcnow()
         self.headers = {
             "accept": "application/json",
-            "X-API-Key": MORALIS_API_KEY
+            "X-API-Key": MORALIS_API_KEYS[self.current_key_index]
         }
         self.api_status = {}
+        self.rate_limit_hits = 0
 
     async def init_db(self):
         """Initialize database connection pool"""
@@ -51,6 +67,63 @@ class MoralisFinalMonitor:
     async def init_session(self):
         """Initialize aiohttp session"""
         self.session = aiohttp.ClientSession(headers=self.headers)
+
+    def rotate_api_key(self):
+        """Rotate to the next API key"""
+        self.current_key_index = (self.current_key_index + 1) % len(MORALIS_API_KEYS)
+        self.key_usage_count = 0
+        self.headers["X-API-Key"] = MORALIS_API_KEYS[self.current_key_index]
+        logger.warning(f"Rotated to API key {self.current_key_index + 1} of {len(MORALIS_API_KEYS)}")
+
+    async def check_and_rotate_key(self, response):
+        """Check if we need to rotate the API key based on response"""
+        if response.status == 429:  # Rate limit hit
+            self.rate_limit_hits += 1
+            logger.warning(f"Rate limit hit ({self.rate_limit_hits} times), rotating API key...")
+            self.rotate_api_key()
+            # Recreate session with new headers
+            if self.session:
+                await self.session.close()
+            self.session = aiohttp.ClientSession(headers=self.headers)
+            return True
+
+        # Check for specific error messages indicating rate limit
+        if response.status >= 400:
+            try:
+                error_text = await response.text()
+                if any(msg in error_text.lower() for msg in ['rate limit', 'quota exceeded', 'too many requests']):
+                    logger.warning(f"Rate limit detected in error message, rotating key...")
+                    self.rotate_api_key()
+                    if self.session:
+                        await self.session.close()
+                    self.session = aiohttp.ClientSession(headers=self.headers)
+                    return True
+            except:
+                pass
+
+        return False
+
+    async def make_api_request(self, url: str, params: dict = None) -> Optional[Dict]:
+        """Make an API request with automatic key rotation on rate limit"""
+        try:
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    return await response.json()
+                elif await self.check_and_rotate_key(response):
+                    # Retry with new key
+                    async with self.session.get(url, params=params) as retry_response:
+                        if retry_response.status == 200:
+                            return await retry_response.json()
+                        else:
+                            logger.warning(f"API request failed after rotation: {retry_response.status}")
+                            return None
+                else:
+                    error_text = await response.text()
+                    logger.warning(f"API request failed: {response.status} - {error_text[:100]}")
+                    return None
+        except Exception as e:
+            logger.error(f"Error making API request: {e}")
+            return None
 
     async def close(self):
         """Clean up resources"""
@@ -93,6 +166,7 @@ class MoralisFinalMonitor:
                 "order": "DESC"
             }
 
+            # Try request with current key
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -100,6 +174,20 @@ class MoralisFinalMonitor:
                     logger.info(f"✅ SWAPS: Fetched {len(swaps)} swap transactions")
                     self.api_status['swaps'] = 'working'
                     return swaps
+                elif await self.check_and_rotate_key(response):
+                    # Retry with new key
+                    async with self.session.get(url, params=params) as retry_response:
+                        if retry_response.status == 200:
+                            data = await retry_response.json()
+                            swaps = data.get("result", []) if isinstance(data, dict) else []
+                            logger.info(f"✅ SWAPS: Fetched {len(swaps)} swap transactions (after key rotation)")
+                            self.api_status['swaps'] = 'working'
+                            return swaps
+                        else:
+                            error_text = await retry_response.text()
+                            logger.warning(f"❌ SWAPS: API returned {retry_response.status} after rotation: {error_text[:100]}")
+                            self.api_status['swaps'] = f'error_{retry_response.status}'
+                            return []
                 else:
                     error_text = await response.text()
                     logger.warning(f"❌ SWAPS: API returned {response.status}: {error_text[:100]}")
@@ -128,6 +216,19 @@ class MoralisFinalMonitor:
                     logger.info(f"✅ TRANSFERS: Fetched {len(transfers)} transfers")
                     self.api_status['transfers'] = 'working'
                     return transfers
+                elif await self.check_and_rotate_key(response):
+                    # Retry with new key
+                    async with self.session.get(url, params=params) as retry_response:
+                        if retry_response.status == 200:
+                            data = await retry_response.json()
+                            transfers = data.get("result", []) if isinstance(data, dict) else []
+                            logger.info(f"✅ TRANSFERS: Fetched {len(transfers)} transfers (after key rotation)")
+                            self.api_status['transfers'] = 'working'
+                            return transfers
+                        else:
+                            logger.warning(f"❌ TRANSFERS: API returned {retry_response.status} after rotation")
+                            self.api_status['transfers'] = f'error_{retry_response.status}'
+                            return []
                 else:
                     logger.warning(f"❌ TRANSFERS: API returned {response.status}")
                     self.api_status['transfers'] = f'error_{response.status}'
@@ -217,17 +318,14 @@ class MoralisFinalMonitor:
             url = f"{MORALIS_BASE_URL}/pairs/{POOL_ADDRESS}/stats"
             params = {"chain": "bsc"}
 
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    logger.info("✅ PAIR-STATS: Fetched pair statistics successfully")
-                    self.api_status['pair_stats'] = 'working'
-                    return data
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"❌ PAIR-STATS: API returned {response.status}: {error_text[:100]}")
-                    self.api_status['pair_stats'] = f'error_{response.status}'
-                    return {}
+            data = await self.make_api_request(url, params)
+            if data:
+                logger.info("✅ PAIR-STATS: Fetched pair statistics successfully")
+                self.api_status['pair_stats'] = 'working'
+                return data
+            else:
+                self.api_status['pair_stats'] = 'error'
+                return {}
         except Exception as e:
             logger.error(f"❌ PAIR-STATS: Error fetching pair stats: {e}")
             self.api_status['pair_stats'] = 'exception'
@@ -240,17 +338,14 @@ class MoralisFinalMonitor:
             url = f"{MORALIS_BASE_URL}/tokens/{BTCB_ADDRESS}/analytics"
             params = {"chain": "bsc"}
 
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    logger.info("✅ TOKEN-ANALYTICS: Fetched token analytics successfully")
-                    self.api_status['token_analytics'] = 'working'
-                    return data
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"❌ TOKEN-ANALYTICS: API returned {response.status}: {error_text[:100]}")
-                    self.api_status['token_analytics'] = f'error_{response.status}'
-                    return {}
+            data = await self.make_api_request(url, params)
+            if data:
+                logger.info("✅ TOKEN-ANALYTICS: Fetched token analytics successfully")
+                self.api_status['token_analytics'] = 'working'
+                return data
+            else:
+                self.api_status['token_analytics'] = 'error'
+                return {}
         except Exception as e:
             logger.error(f"❌ TOKEN-ANALYTICS: Error fetching token analytics: {e}")
             self.api_status['token_analytics'] = 'exception'
@@ -292,17 +387,14 @@ class MoralisFinalMonitor:
             url = f"{MORALIS_BASE_URL}/erc20/{BTCB_ADDRESS}/holders"
             params = {"chain": "bsc"}
 
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    logger.info(f"✅ HOLDER-STATS: Fetched holder stats - {data.get('totalHolders', 0)} holders")
-                    self.api_status['holder_stats'] = 'working'
-                    return data
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"❌ HOLDER-STATS: API returned {response.status}: {error_text[:100]}")
-                    self.api_status['holder_stats'] = f'error_{response.status}'
-                    return {}
+            data = await self.make_api_request(url, params)
+            if data:
+                logger.info(f"✅ HOLDER-STATS: Fetched holder stats - {data.get('totalHolders', 0)} holders")
+                self.api_status['holder_stats'] = 'working'
+                return data
+            else:
+                self.api_status['holder_stats'] = 'error'
+                return {}
         except Exception as e:
             logger.error(f"❌ HOLDER-STATS: Error fetching holder stats: {e}")
             self.api_status['holder_stats'] = 'exception'
@@ -325,18 +417,15 @@ class MoralisFinalMonitor:
                 "timeFrame": time_frame
             }
 
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    holders = data.get("result", []) if isinstance(data, dict) else []
-                    logger.info(f"✅ HISTORICAL-HOLDERS: Fetched {len(holders)} historical records")
-                    self.api_status['historical_holders'] = 'working'
-                    return holders
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"❌ HISTORICAL-HOLDERS: API returned {response.status}: {error_text[:100]}")
-                    self.api_status['historical_holders'] = f'error_{response.status}'
-                    return []
+            data = await self.make_api_request(url, params)
+            if data:
+                holders = data.get("result", []) if isinstance(data, dict) else []
+                logger.info(f"✅ HISTORICAL-HOLDERS: Fetched {len(holders)} historical records")
+                self.api_status['historical_holders'] = 'working'
+                return holders
+            else:
+                self.api_status['historical_holders'] = 'error'
+                return []
         except Exception as e:
             logger.error(f"❌ HISTORICAL-HOLDERS: Error fetching historical holders: {e}")
             self.api_status['historical_holders'] = 'exception'
@@ -430,24 +519,21 @@ class MoralisFinalMonitor:
                 "blocksAfterCreation": blocks_after_creation
             }
 
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    snipers = data.get("result", []) if isinstance(data, dict) else []
-                    logger.info(f"✅ SNIPERS: Fetched {len(snipers)} snipers")
-                    self.api_status['snipers'] = 'working'
+            data = await self.make_api_request(url, params)
+            if data:
+                snipers = data.get("result", []) if isinstance(data, dict) else []
+                logger.info(f"✅ SNIPERS: Fetched {len(snipers)} snipers")
+                self.api_status['snipers'] = 'working'
 
-                    # If no snipers found, calculate from early swaps
-                    if len(snipers) == 0:
-                        logger.info("⚠️ SNIPERS: No snipers found, calculating from early swaps...")
-                        snipers = await self.calculate_snipers_from_swaps()
+                # If no snipers found, calculate from early swaps
+                if len(snipers) == 0:
+                    logger.info("⚠️ SNIPERS: No snipers found, calculating from early swaps...")
+                    snipers = await self.calculate_snipers_from_swaps()
 
-                    return snipers
-                else:
-                    error_text = await response.text()
-                    logger.warning(f"❌ SNIPERS: API returned {response.status}: {error_text[:100]}")
-                    self.api_status['snipers'] = f'error_{response.status}'
-                    return []
+                return snipers
+            else:
+                self.api_status['snipers'] = 'error'
+                return []
         except Exception as e:
             logger.error(f"❌ SNIPERS: Error fetching snipers: {e}")
             self.api_status['snipers'] = 'exception'
@@ -1007,7 +1093,7 @@ class MoralisFinalMonitor:
         """Run one monitoring cycle with all 9 endpoints"""
         try:
             logger.info("="*60)
-            logger.info("Starting monitoring cycle for all 9 endpoints...")
+            logger.info(f"Starting monitoring cycle (API key {self.current_key_index + 1}/{len(MORALIS_API_KEYS)})...")
             logger.info("="*60)
 
             # 1. Fetch and store swaps
