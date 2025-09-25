@@ -34,7 +34,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 
 # Contract addresses
 POOL_ADDRESS = "0x46cf1cf8c69595804ba91dfdd8d6b960c9b0a7c4"
-LP_TOKEN_ADDRESS = "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"  # LP token is separate from pool
+# PancakeSwap V3 NFT Position Manager (handles LP positions as NFTs)
+V3_POSITION_MANAGER = "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364"
 BTCB_ADDRESS = "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c"
 USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955"
 PANCAKE_FACTORY = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
@@ -439,14 +440,86 @@ class BSCPoolMonitor:
             logger.error(f"Error fetching transfers for {token_symbol}: {e}")
             return []
 
-    async def fetch_lp_token_transfers(self, hours: int = 1) -> List[Dict]:
-        """Fetch LP token transfer events using Web3 or BSCScan API"""
+    async def fetch_v3_liquidity_events(self, hours: int = 1) -> List[Dict]:
+        """Fetch PancakeSwap V3 liquidity events (Mint/Burn) from the pool"""
+        events = []
         try:
-            # Try Web3 approach first if available
-            if Web3 is not None:
-                transfers = await self.fetch_lp_transfers_web3(hours)
-                if transfers:
-                    return transfers
+            # V3 Event signatures
+            MINT_TOPIC = "0x7a53080ba414158be7ec69b987b5fb7d07dee101fe85488f0853ae16239d0bde"
+            BURN_TOPIC = "0x0c396cd989a39f4459b5fa1aed6a9a8dcdbc45e3de096f3d50e8798e28391ffc"
+
+            current_block = await self.get_current_block()
+            if not current_block:
+                return []
+
+            blocks_per_hour = 1200  # ~3 seconds per block on BSC
+            from_block = max(0, current_block - (blocks_per_hour * hours))
+
+            # Get Mint events (liquidity adds)
+            url = "https://api.etherscan.io/v2/api"
+            params = {
+                "chainid": "56",
+                "module": "logs",
+                "action": "getLogs",
+                "address": POOL_ADDRESS,
+                "fromBlock": str(from_block),
+                "toBlock": str(current_block),
+                "topic0": MINT_TOPIC,
+                "apikey": BSCSCAN_API_KEY
+            }
+
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                if data.get("status") == "1" and data.get("result"):
+                    for log in data["result"]:
+                        owner = "0x" + log.get("topics", ["", "0x"])[1][-40:] if len(log.get("topics", [])) > 1 else ""
+                        events.append({
+                            "tx_hash": log.get("transactionHash"),
+                            "block_number": int(log.get("blockNumber", "0x0"), 16),
+                            "from_address": "0x" + "0" * 40,  # Mint from null address
+                            "to_address": owner,
+                            "lp_amount": 0,  # V3 doesn't have LP amounts, it has position IDs
+                            "btcb_amount": 0,  # Would need to decode from event data
+                            "usdt_amount": 0,
+                            "total_value_usd": 0,
+                            "transfer_type": "mint",
+                            "pool_share_percent": 0,
+                            "timestamp": datetime.utcnow()
+                        })
+
+            # Get Burn events (liquidity removes)
+            params["topic0"] = BURN_TOPIC
+            async with self.session.get(url, params=params) as response:
+                data = await response.json()
+                if data.get("status") == "1" and data.get("result"):
+                    for log in data["result"]:
+                        owner = "0x" + log.get("topics", ["", "0x"])[1][-40:] if len(log.get("topics", [])) > 1 else ""
+                        events.append({
+                            "tx_hash": log.get("transactionHash"),
+                            "block_number": int(log.get("blockNumber", "0x0"), 16),
+                            "from_address": owner,
+                            "to_address": "0x" + "0" * 40,  # Burn to null address
+                            "lp_amount": 0,  # V3 doesn't have LP amounts
+                            "btcb_amount": 0,
+                            "usdt_amount": 0,
+                            "total_value_usd": 0,
+                            "transfer_type": "burn",
+                            "pool_share_percent": 0,
+                            "timestamp": datetime.utcnow()
+                        })
+
+            logger.info(f"Found {len(events)} V3 liquidity events")
+            return events
+
+        except Exception as e:
+            logger.error(f"Error fetching V3 liquidity events: {e}")
+            return []
+
+    async def fetch_lp_token_transfers(self, hours: int = 1) -> List[Dict]:
+        """Fetch LP token transfer events - for V3, we track Position Manager NFT transfers"""
+        try:
+            # For V3, fetch liquidity events instead of LP token transfers
+            return await self.fetch_v3_liquidity_events(hours)
 
             # Fall back to BSCScan API
             # Get current block number first
@@ -471,7 +544,7 @@ class BSCPoolMonitor:
             params = {
                 "module": "account",
                 "action": "tokentx",  # ERC20 token transfers
-                "contractaddress": LP_TOKEN_ADDRESS,  # Correct LP token address
+                "contractaddress": V3_POSITION_MANAGER,  # V3 Position Manager NFT
                 "startblock": "0",
                 "endblock": "99999999",
                 "page": "1",
@@ -532,7 +605,7 @@ class BSCPoolMonitor:
             event_filter = {
                 'fromBlock': from_block,
                 'toBlock': latest_block,
-                'address': Web3.to_checksum_address(LP_TOKEN_ADDRESS),  # LP token, not pool
+                'address': Web3.to_checksum_address(V3_POSITION_MANAGER),  # V3 Position Manager
                 'topics': [transfer_topic]
             }
 
@@ -737,7 +810,7 @@ class BSCPoolMonitor:
                 "chainid": "56",  # BSC chain ID
                 "module": "stats",
                 "action": "tokensupply",
-                "contractaddress": LP_TOKEN_ADDRESS,  # LP token, not pool
+                "contractaddress": V3_POSITION_MANAGER,  # V3 Position Manager
                 "apikey": BSCSCAN_API_KEY
             }
 
@@ -815,7 +888,7 @@ class BSCPoolMonitor:
                 "chainid": "56",  # BSC chain ID
                 "module": "account",
                 "action": "tokenbalance",
-                "contractaddress": LP_TOKEN_ADDRESS,  # Separate LP token contract
+                "contractaddress": V3_POSITION_MANAGER,  # V3 Position Manager
                 "address": wallet_address,
                 "tag": "latest",
                 "apikey": BSCSCAN_API_KEY
