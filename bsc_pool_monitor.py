@@ -279,10 +279,12 @@ class BSCPoolMonitor:
     async def fetch_pool_reserves(self) -> Dict:
         """Fetch current pool reserves from blockchain"""
         try:
-            url = "https://api.bscscan.com/api"
+            # Use Etherscan V2 API with BSC chainid
+            url = "https://api.etherscan.io/v2/api"
 
             # Get USDT balance in pool
             params = {
+                "chainid": "56",  # BSC chain ID
                 "module": "account",
                 "action": "tokenbalance",
                 "contractaddress": USDT_ADDRESS,
@@ -729,8 +731,10 @@ class BSCPoolMonitor:
     async def get_lp_total_supply(self) -> float:
         """Get total supply of LP tokens"""
         try:
-            url = "https://api.bscscan.com/api"
+            # Use V2 API
+            url = "https://api.etherscan.io/v2/api"
             params = {
+                "chainid": "56",  # BSC chain ID
                 "module": "stats",
                 "action": "tokensupply",
                 "contractaddress": LP_TOKEN_ADDRESS,  # LP token, not pool
@@ -805,9 +809,10 @@ class BSCPoolMonitor:
     async def update_lp_holder(self, wallet_address: str):
         """Update LP holder record with current balance and value"""
         try:
-            # Get LP balance for this wallet
-            url = "https://api.bscscan.com/api"
+            # Get LP balance for this wallet using V2 API
+            url = "https://api.etherscan.io/v2/api"
             params = {
+                "chainid": "56",  # BSC chain ID
                 "module": "account",
                 "action": "tokenbalance",
                 "contractaddress": LP_TOKEN_ADDRESS,  # Separate LP token contract
