@@ -1,0 +1,231 @@
+{
+  "title": "Multi-Pool LP Activity Comparison",
+  "panels": [
+    {
+      "title": "LP Activity by Pool (24h)",
+      "type": "bargauge",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": "PostgreSQL",
+          "rawSql": "SELECT \n  pool_name || ' ' || pool_version as \"Pool\",\n  COUNT(*) as \"Total Events\"\nFROM multi_pool_lp_activity\nWHERE timestamp > NOW() - INTERVAL '24 hours'\nGROUP BY pool_name, pool_version\nORDER BY COUNT(*) DESC",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "title": "LP Event Types Distribution",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": "PostgreSQL",
+          "rawSql": "SELECT \n  pool_name || ' - ' || transfer_type as \"Type\",\n  COUNT(*) as \"Count\"\nFROM multi_pool_lp_activity\nWHERE timestamp > NOW() - INTERVAL '24 hours'\nGROUP BY pool_name, transfer_type",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "percent"],
+        "legendDisplayMode": "list",
+        "legendPlacement": "right"
+      }
+    },
+    {
+      "title": "LP Activity Timeline",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "datasource": "PostgreSQL",
+          "rawSql": "SELECT \n  timestamp as time,\n  pool_name || ' ' || pool_version as metric,\n  CASE \n    WHEN transfer_type = 'mint' THEN 1\n    WHEN transfer_type = 'burn' THEN -1\n    ELSE 0.5\n  END as value\nFROM multi_pool_lp_activity\nWHERE timestamp > NOW() - INTERVAL '7 days'\nORDER BY timestamp",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": -1,
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "gradientMode": "scheme",
+            "spanNulls": false,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "value": 1,
+              "options": {
+                "result": {
+                  "text": "Add Liquidity",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "value": -1,
+              "options": {
+                "result": {
+                  "text": "Remove Liquidity",
+                  "color": "red"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "value": 0.5,
+              "options": {
+                "result": {
+                  "text": "Transfer",
+                  "color": "blue"
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "title": "Recent LP Transactions",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "datasource": "PostgreSQL",
+          "rawSql": "SELECT \n  timestamp as \"Time\",\n  pool_name as \"Pool\",\n  pool_version as \"Version\",\n  transfer_type as \"Type\",\n  CASE\n    WHEN from_address = '0x0000000000000000000000000000000000000000' THEN 'Mint from 0x0'\n    WHEN to_address = '0x0000000000000000000000000000000000000000' THEN 'Burn to 0x0'\n    ELSE CONCAT(SUBSTRING(from_address, 1, 6), '...', SUBSTRING(from_address, 39, 4))\n  END as \"From\",\n  CASE\n    WHEN to_address = '0x0000000000000000000000000000000000000000' THEN 'Burn to 0x0'\n    WHEN from_address = '0x0000000000000000000000000000000000000000' THEN 'Mint to ' || SUBSTRING(to_address, 1, 6) || '...'\n    ELSE CONCAT(SUBSTRING(to_address, 1, 6), '...', SUBSTRING(to_address, 39, 4))\n  END as \"To\",\n  ROUND(lp_amount::numeric, 6) as \"LP Amount\",\n  CONCAT(SUBSTRING(tx_hash, 1, 10), '...') as \"Tx Hash\"\nFROM multi_pool_lp_activity\nORDER BY timestamp DESC\nLIMIT 50",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background-solid"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "value": "mint",
+                    "options": {
+                      "result": {
+                        "color": "green",
+                        "text": "ADD"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "value": "burn",
+                    "options": {
+                      "result": {
+                        "color": "red",
+                        "text": "REMOVE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "value": "transfer",
+                    "options": {
+                      "result": {
+                        "color": "blue",
+                        "text": "TRANSFER"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Version"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "value": "V2",
+                    "options": {
+                      "result": {
+                        "color": "purple"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "value": "V3",
+                    "options": {
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
