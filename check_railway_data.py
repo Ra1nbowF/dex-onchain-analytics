@@ -33,8 +33,17 @@ def check_railway_data():
             ('bsc_pool_metrics', 'timestamp'),
             ('bsc_liquidity_events', 'timestamp'),
             ('bsc_wallet_metrics', 'updated_at'),
+            # Original Moralis tables
             ('moralis_swaps', 'timestamp'),
             ('moralis_swaps_enhanced', 'timestamp'),
+            # Moralis tables with _correct suffix (what dashboards use)
+            ('moralis_swaps_correct', 'timestamp'),
+            ('moralis_liquidity_correct', 'timestamp'),
+            ('moralis_price_history_correct', 'timestamp'),
+            ('moralis_pair_stats_correct', 'timestamp'),
+            ('moralis_volume_metrics_correct', 'timestamp'),
+            ('moralis_whale_activity_correct', 'timestamp'),
+            ('moralis_arbitrage_correct', 'timestamp'),
             ('moralis_holders', 'timestamp'),
             ('moralis_holder_distribution', 'timestamp'),
             ('moralis_token_analytics_enhanced', 'timestamp'),
