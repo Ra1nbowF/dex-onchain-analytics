@@ -28,7 +28,8 @@ logger.setLevel(logging.WARNING)
 
 # Configuration
 BSC_RPC = "https://bsc-dataseed1.binance.org/"
-BSCSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY", "YZEHUAFGEUNSGKFQVVETB67299E24NMCPH")
+# Use BSCScan API key, fallback to Etherscan key if not set
+BSCSCAN_API_KEY = os.getenv("BSCSCAN_API_KEY", os.getenv("ETHERSCAN_API_KEY", "YZEHUAFGEUNSGKFQVVETB67299E24NMCPH"))
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/dex_analytics")
 
 # Contract addresses
@@ -999,22 +1000,36 @@ class BSCPoolMonitor:
         return max(0, min(1, gini))  # Ensure between 0 and 1
 
     async def get_current_block(self) -> int:
-        """Get current BSC block number"""
-        try:
-            url = "https://api.bscscan.com/api"
-            params = {
-                "module": "proxy",
-                "action": "eth_blockNumber",
-                "apikey": BSCSCAN_API_KEY
-            }
+        """Get current BSC block number using RPC directly"""
+        # Use BSC RPC directly to avoid deprecated BSCScan proxy endpoint
+        rpc_endpoints = [
+            BSC_RPC,
+            "https://bsc-dataseed1.binance.org/",
+            "https://bsc.publicnode.com",
+            "https://bsc-dataseed2.binance.org/"
+        ]
 
-            async with self.session.get(url, params=params) as response:
-                data = await response.json()
-                if data.get("result"):
-                    return int(data["result"], 16)
-        except Exception as e:
-            logger.error(f"Error getting block number: {e}")
+        for rpc in rpc_endpoints:
+            try:
+                payload = {
+                    "jsonrpc": "2.0",
+                    "method": "eth_blockNumber",
+                    "params": [],
+                    "id": 1
+                }
 
+                async with self.session.post(rpc, json=payload) as response:
+                    result = await response.json()
+                    if result.get("result"):
+                        block_num = int(result["result"], 16)
+                        # Only log debug, not error
+                        logger.debug(f"Got block number {block_num} from {rpc}")
+                        return block_num
+            except Exception as e:
+                # Try next RPC
+                continue
+
+        logger.error("Failed to get block number from all RPC endpoints")
         return 0
 
     async def monitor_pool(self):
