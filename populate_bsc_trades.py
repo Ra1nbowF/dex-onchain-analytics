@@ -92,22 +92,26 @@ if swap_logs:
                 amount1 = abs(amount1_raw) / 10**18  # USDT
 
                 # Determine trade direction
-                # If amount0 is negative, BTCB was sold (user sells BTCB)
-                # If amount0 is positive, BTCB was bought (user buys BTCB)
-                is_buy = amount0_raw > 0
+                # BTCB is token0, USDT is token1
+                # If amount0 is negative, BTCB goes OUT (user SELLS BTCB)
+                # If amount0 is positive, BTCB comes IN (user BUYS BTCB)
+                # If amount1 is negative, USDT goes OUT (user BUYS with USDT)
+                # If amount1 is positive, USDT comes IN (user SELLS for USDT)
 
-                if is_buy:
-                    # Buying BTCB with USDT
-                    token_in = USDT_ADDRESS
-                    token_out = BTCB_ADDRESS
-                    amount_in = amount1
-                    amount_out = amount0
-                else:
-                    # Selling BTCB for USDT
+                if amount0_raw < 0:
+                    # BTCB going out, USDT coming in = SELLING BTCB for USDT
+                    is_buy = False
                     token_in = BTCB_ADDRESS
                     token_out = USDT_ADDRESS
                     amount_in = amount0
                     amount_out = amount1
+                else:
+                    # BTCB coming in, USDT going out = BUYING BTCB with USDT
+                    is_buy = True
+                    token_in = USDT_ADDRESS
+                    token_out = BTCB_ADDRESS
+                    amount_in = amount1
+                    amount_out = amount0
 
                 # Calculate price and value
                 if amount0 > 0:
