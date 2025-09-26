@@ -23,7 +23,8 @@
       "Bash(grep:*)",
       "WebFetch(domain:docs.bscscan.com)",
       "WebFetch(domain:docs.etherscan.io)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []
