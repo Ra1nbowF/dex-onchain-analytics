@@ -2519,7 +2519,7 @@
             "uid": "postgres"
           },
           "format": "table",
-          "rawSql": "SELECT\n  SUBSTRING(wallet_address, 1, 6) || '...' || SUBSTRING(wallet_address, LENGTH(wallet_address) - 3) as \"Wallet\",\n  COUNT(*) as \"Trades\",\n  COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as \"Buys\",\n  COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as \"Sells\",\n  SUM(total_value_usd) as \"Total Volume\",\n  AVG(total_value_usd) as \"Avg Trade Size\",\n  COALESCE(wallet_address_label, entity, 'Unknown') as \"Identity\",\n  SUM(CASE WHEN transaction_type = 'buy' THEN bought_usd_amount ELSE -sold_usd_amount END) as \"Net Flow\"\nFROM moralis_swaps_correct\nGROUP BY wallet_address, wallet_address_label, entity\nORDER BY \"Total Volume\" DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  trader_address as \"Wallet Address\",\n  COUNT(*) as \"Total Trades\",\n  COUNT(CASE WHEN is_buy THEN 1 END) as \"Buy Orders\",\n  COUNT(CASE WHEN is_buy = false THEN 1 END) as \"Sell Orders\",\n  COALESCE(SUM(value_usd), 0) as \"Total Volume USD\",\n  COALESCE(AVG(value_usd), 0) as \"Avg Trade Size\",\n  COALESCE(SUM(CASE WHEN is_buy THEN amount_out ELSE 0 END), 0) as \"BTCB Bought\",\n  COALESCE(SUM(CASE WHEN is_buy = false THEN amount_in ELSE 0 END), 0) as \"BTCB Sold\",\n  COALESCE(SUM(gas_used), 0) as \"Total Gas Used\"\nFROM bsc_trades\nGROUP BY trader_address\nORDER BY COUNT(*) DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -2627,7 +2627,7 @@
             "uid": "postgres"
           },
           "format": "table",
-          "rawSql": "SELECT\n  block_timestamp as \"Time\",\n  SUBSTRING(from_address, 1, 8) || '...' as \"From\",\n  SUBSTRING(to_address, 1, 8) || '...' as \"To\",\n  value / POWER(10, 18) as \"Amount\",\n  (value / POWER(10, 18)) * 113000 as \"Value\",\n  transaction_hash as \"Tx Hash\"\nFROM moralis_transfers\nORDER BY block_timestamp DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  block_timestamp as \"Time\",\n  from_address as \"From Address\",\n  to_address as \"To Address\",\n  CASE\n    WHEN token_address = '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c' THEN 'BTCB'\n    WHEN token_address = '0x55d398326f99059ff775485246999027b3197955' THEN 'USDT'\n    ELSE 'Unknown'\n  END as \"Token\",\n  value / POWER(10, 18) as \"Amount\",\n  CASE\n    WHEN token_address = '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c' THEN (value / POWER(10, 18)) * 70000\n    WHEN token_address = '0x55d398326f99059ff775485246999027b3197955' THEN value / POWER(10, 18)\n    ELSE 0\n  END as \"Value USD\",\n  transaction_hash as \"Transaction Hash\"\nFROM moralis_transfers\nWHERE token_address IN ('0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c', '0x55d398326f99059ff775485246999027b3197955')\nORDER BY block_timestamp DESC\nLIMIT 50",
           "refId": "A"
         }
       ],
