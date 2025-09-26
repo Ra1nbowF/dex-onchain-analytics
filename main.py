@@ -16,10 +16,13 @@ logger.setLevel(logging.WARNING)
 # Configuration - Use Railway DATABASE_URL if available
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/dex_analytics")
 
-# Multiple Moralis API keys for rotation (80K CU/day total)
+# Multiple Moralis API keys for rotation (160K CU/day total - 4 keys)
+# Keys 3 and 4 are currently active, Keys 1 and 2 may have exceeded daily limits
 MORALIS_API_KEYS = [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjE4MzllMjEzLWFiNTAtNDI5Ny1iMzM3LWVhZDM3MTE5OTJjMSIsIm9yZ0lkIjoiNDcyMjEzIiwidXNlcklkIjoiNDg1NzY4IiwidHlwZUlkIjoiNTE3NjkxZWQtMTlmZC00NTQ5LThjZjYtOWMxMDhlM2E0NTkwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg3Mjc4MTAsImV4cCI6NDkxNDQ4NzgxMH0.cWOzKINUOPnKRTz5mDJTmBS4JG5ScVu61DtWyMephHo",  # Key 1: 40K CU/day
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImEwZTY5NWEzLTMyMWYtNDg4ZC1hOWE5LTcwNTVkNDk4NmJjZiIsIm9yZ0lkIjoiMjM3NDkyIiwidXNlcklkIjoiMjM4OTk4IiwidHlwZUlkIjoiNjE0ZDkyZDYtOTdmNy00ZDVkLWJiZTktYTViY2UwYjBlZTNjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg2ODQwMDcsImV4cCI6NDkxNDQ0NDAwN30.Wf8nL2zhKaVk0AfobeiF3r57OM_qNYeR9Voc6nenRNk"   # Key 2: 40K CU/day
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImE4MjMzZGUzLTQ4MjQtNDdmNy1iNTUxLWVhMzNlM2I1NzE2ZiIsIm9yZ0lkIjoiNDcyNDQ1IiwidXNlcklkIjoiNDg2MDEwIiwidHlwZUlkIjoiZjM5MTI5ZWYtNThhYS00MDNlLTkxZGYtMDI4ZWNiMWY1NmUzIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg4NDQ0MTYsImV4cCI6NDkxNDYwNDQxNn0.3IpzWsLcfUtVddECU2-nh9vFiBLMwMHcaR3r7cuFCuk",  # Key 3 (NEW): 40K CU/day - ACTIVE
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImIwNjhhY2M0LTRhYzMtNGM3NS05MzQxLWVhMzRlN2FlYjU0ZCIsIm9yZ0lkIjoiNDcyNDQ2IiwidXNlcklkIjoiNDg2MDExIiwidHlwZUlkIjoiNDc5MTk3ZmUtNzAxZi00ODE1LWJkMGMtYzYwMzY4NTUwYjIwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg4NDQ1NDIsImV4cCI6NDkxNDYwNDU0Mn0.822M36Ie7Pjl4tUSyVeJ-sUNGSm93QR1gHQywj0_z2o",  # Key 4 (NEW): 40K CU/day - ACTIVE
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjE4MzllMjEzLWFiNTAtNDI5Ny1iMzM3LWVhZDM3MTE5OTJjMSIsIm9yZ0lkIjoiNDcyMjEzIiwidXNlcklkIjoiNDg1NzY4IiwidHlwZUlkIjoiNTE3NjkxZWQtMTlmZC00NTQ5LThjZjYtOWMxMDhlM2E0NTkwIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg3Mjc4MTAsImV4cCI6NDkxNDQ4NzgxMH0.cWOzKINUOPnKRTz5mDJTmBS4JG5ScVu61DtWyMephHo",  # Key 1: 40K CU/day - May be exhausted
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImEwZTY5NWEzLTMyMWYtNDg4ZC1hOWE5LTcwNTVkNDk4NmJjZiIsIm9yZ0lkIjoiMjM3NDkyIiwidXNlcklkIjoiMjM4OTk4IiwidHlwZUlkIjoiNjE0ZDkyZDYtOTdmNy00ZDVkLWJiZTktYTViY2UwYjBlZTNjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NTg2ODQwMDcsImV4cCI6NDkxNDQ0NDAwN30.Wf8nL2zhKaVk0AfobeiF3r57OM_qNYeR9Voc6nenRNk"   # Key 2: 40K CU/day - May be exhausted
 ]
 
 # Key rotation tracking
@@ -70,10 +73,15 @@ class MoralisFinalMonitor:
 
     def rotate_api_key(self):
         """Rotate to the next API key"""
+        previous_index = self.current_key_index
         self.current_key_index = (self.current_key_index + 1) % len(MORALIS_API_KEYS)
         self.key_usage_count = 0
         self.headers["X-API-Key"] = MORALIS_API_KEYS[self.current_key_index]
-        logger.warning(f"Rotated to API key {self.current_key_index + 1} of {len(MORALIS_API_KEYS)}")
+        logger.info(f"Rotated from API key {previous_index + 1} to key {self.current_key_index + 1} of {len(MORALIS_API_KEYS)}")
+
+        # If we've cycled through all keys, add a delay
+        if self.current_key_index == 0:
+            logger.warning("Cycled through all API keys, consider adding delay to avoid rate limits")
 
     async def check_and_rotate_key(self, response):
         """Check if we need to rotate the API key based on response"""
