@@ -2627,7 +2627,7 @@
             "uid": "postgres"
           },
           "format": "table",
-          "rawSql": "SELECT\n  block_timestamp as \"Time\",\n  from_address as \"From Address\",\n  to_address as \"To Address\",\n  CASE\n    WHEN token_address = '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c' THEN 'BTCB'\n    WHEN token_address = '0x55d398326f99059ff775485246999027b3197955' THEN 'USDT'\n    ELSE 'Unknown'\n  END as \"Token\",\n  value / POWER(10, 18) as \"Amount\",\n  CASE\n    WHEN token_address = '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c' THEN (value / POWER(10, 18)) * 70000\n    WHEN token_address = '0x55d398326f99059ff775485246999027b3197955' THEN value / POWER(10, 18)\n    ELSE 0\n  END as \"Value USD\",\n  transaction_hash as \"Transaction Hash\"\nFROM moralis_transfers\nWHERE token_address IN ('0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c', '0x55d398326f99059ff775485246999027b3197955')\nORDER BY block_timestamp DESC\nLIMIT 50",
+          "rawSql": "SELECT\n  timestamp as \"Time\",\n  from_address as \"From Address\",\n  to_address as \"To Address\",\n  token_symbol as \"Token\",\n  amount as \"Amount\",\n  value_usd as \"Value USD\",\n  transfer_type as \"Type\",\n  CASE \n    WHEN is_pool_related THEN 'Yes'\n    ELSE 'No'\n  END as \"Pool Related\",\n  tx_hash as \"Transaction Hash\"\nFROM bsc_token_transfers\nORDER BY timestamp DESC\nLIMIT 50",
           "refId": "A"
         }
       ],
