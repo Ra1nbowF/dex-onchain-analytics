@@ -1,0 +1,50 @@
+# Multi-purpose Dockerfile for AWS deployment
+# Can be used for both EC2 and Lambda
+
+# For EC2 deployment
+FROM python:3.10-slim AS ec2
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Add Flask and Gunicorn for API
+RUN pip install --no-cache-dir Flask==3.0.0 gunicorn==21.2.0 psycopg2-binary==2.9.9
+
+# Copy application files
+COPY *.py ./
+COPY grafana/ ./grafana/
+
+# Expose port for Flask API
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Run with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "application:app"]
+
+# For Lambda deployment (use AWS Lambda Python base image)
+FROM public.ecr.aws/lambda/python:3.10 AS lambda
+
+# Copy requirements first
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir psycopg2-binary==2.9.9
+
+# Copy function files
+COPY lambda_handler.py ./
+COPY fetch_bscscan_transfers.py ./
+COPY populate_bsc_trades.py ./
+
+# Set the handler
+CMD ["lambda_handler.handler"]

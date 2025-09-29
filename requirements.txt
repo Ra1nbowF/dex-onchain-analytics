@@ -2,6 +2,11 @@
 asyncpg==0.29.0
 aiohttp==3.9.1
 python-dotenv==1.0.0
+psycopg2-binary==2.9.9
+
+# Web framework
+Flask==3.0.0
+gunicorn==21.2.0
 
 # For rate limiting
 aiolimiter==1.1.0
@@ -11,3 +16,12 @@ redis==5.0.1
 
 # Web3 for blockchain interaction
 web3==6.11.3
+
+# AWS SDK (optional, for S3 backups)
+boto3==1.28.84
+
+# Database migrations
+alembic==1.12.1
+
+# Monitoring
+prometheus-client==0.19.0
