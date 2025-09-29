@@ -206,43 +206,38 @@ def store_transfers(transfers):
 
 def main():
     print("=" * 70)
-    print("Fetching Token Transfers from BscScan")
+    print("Fetching BTCB Token Transfers from BscScan")
     print("=" * 70)
 
     # Check if API key is set
     if BSCSCAN_API_KEY == "YOUR_API_KEY_HERE":
         print("\n[ERROR] Please set your BscScan API key in the script!")
         print("Get your free API key from: https://bscscan.com/apis")
-        print("\nAlternatively, using web scraping method...")
+        print("\nAlternatively, using blockchain method...")
 
         # Alternative: fetch without API (limited)
         fetch_transfers_no_api()
         return
 
-    # Fetch transfers for both tokens
+    # Fetch transfers for BTCB only (relevant for BTCB/USDT pool)
     all_transfers = []
 
     btcb_transfers = fetch_token_transfers(BTCB_ADDRESS, "BTCB")
     all_transfers.extend(btcb_transfers)
 
-    time.sleep(1)  # Rate limiting between tokens
-
-    usdt_transfers = fetch_token_transfers(USDT_ADDRESS, "USDT")
-    all_transfers.extend(usdt_transfers)
-
     # Store in database
     if all_transfers:
-        print(f"\nTotal transfers collected: {len(all_transfers)}")
+        print(f"\nTotal BTCB transfers collected: {len(all_transfers)}")
         store_transfers(all_transfers)
     else:
         print("\nNo transfers collected")
 
 def fetch_transfers_no_api():
-    """Alternative method: fetch from blockchain directly"""
+    """Alternative method: fetch from blockchain directly - BTCB only"""
     from web3 import Web3
     from web3.middleware import ExtraDataToPOAMiddleware
 
-    print("\nFetching transfers directly from blockchain...")
+    print("\nFetching BTCB transfers directly from blockchain...")
 
     # Connect to BSC
     rpc_url = "https://bsc.publicnode.com"
@@ -253,53 +248,54 @@ def fetch_transfers_no_api():
     TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
     current_block = w3.eth.block_number
-    from_block = current_block - 5000  # Last ~4 hours
+    from_block = current_block - 10000  # Last ~8 hours for more BTCB data
 
     transfers = []
 
-    for token_address, token_name in [(BTCB_ADDRESS, "BTCB"), (USDT_ADDRESS, "USDT")]:
-        print(f"\nFetching {token_name} transfers...")
+    # Only fetch BTCB transfers
+    print(f"\nFetching BTCB transfers...")
 
-        # Get Transfer events
-        logs = w3.eth.get_logs({
-            'fromBlock': from_block,
-            'toBlock': current_block,
-            'address': Web3.to_checksum_address(token_address),
-            'topics': [TRANSFER_TOPIC]
+    # Get Transfer events
+    logs = w3.eth.get_logs({
+        'fromBlock': from_block,
+        'toBlock': current_block,
+        'address': Web3.to_checksum_address(BTCB_ADDRESS),
+        'topics': [TRANSFER_TOPIC]
+    })
+
+    print(f"Found {len(logs)} BTCB transfer events")
+
+    # Process last 100 BTCB transfers
+    for log in logs[-100:]:  # Process last 100 BTCB transfers
+        # Topics: [signature, from, to]
+        from_addr = "0x" + log['topics'][1].hex()[-40:]
+        to_addr = "0x" + log['topics'][2].hex()[-40:]
+
+        # Check if pool-related
+        is_pool = (from_addr.lower() == POOL_ADDRESS.lower() or
+                  to_addr.lower() == POOL_ADDRESS.lower())
+
+        # Decode amount
+        amount_hex = log['data'].hex() if isinstance(log['data'], bytes) else log['data'][2:]
+        amount = int(amount_hex, 16) / 10**18 if amount_hex else 0
+
+        # Get block timestamp
+        block = w3.eth.get_block(log['blockNumber'])
+        timestamp = datetime.fromtimestamp(block['timestamp'])
+
+        transfers.append({
+            'tx_hash': log['transactionHash'].hex(),
+            'block_number': log['blockNumber'],
+            'timestamp': timestamp,
+            'from_address': from_addr.lower(),
+            'to_address': to_addr.lower(),
+            'value': amount,
+            'token_address': BTCB_ADDRESS.lower(),
+            'token_name': 'BTCB',
+            'token_symbol': 'BTCB',
+            'gas_used': 0,  # Would need receipt for this
+            'is_pool_related': is_pool
         })
-
-        print(f"Found {len(logs)} {token_name} transfer events")
-
-        for log in logs[-50:]:  # Process last 50
-            # Topics: [signature, from, to]
-            from_addr = "0x" + log['topics'][1].hex()[-40:]
-            to_addr = "0x" + log['topics'][2].hex()[-40:]
-
-            # Check if pool-related
-            is_pool = (from_addr.lower() == POOL_ADDRESS.lower() or
-                      to_addr.lower() == POOL_ADDRESS.lower())
-
-            # Decode amount
-            amount_hex = log['data'].hex() if isinstance(log['data'], bytes) else log['data'][2:]
-            amount = int(amount_hex, 16) / 10**18 if amount_hex else 0
-
-            # Get block timestamp
-            block = w3.eth.get_block(log['blockNumber'])
-            timestamp = datetime.fromtimestamp(block['timestamp'])
-
-            transfers.append({
-                'tx_hash': log['transactionHash'].hex(),
-                'block_number': log['blockNumber'],
-                'timestamp': timestamp,
-                'from_address': from_addr.lower(),
-                'to_address': to_addr.lower(),
-                'value': amount,
-                'token_address': token_address.lower(),
-                'token_name': token_name,
-                'token_symbol': token_name,
-                'gas_used': 0,  # Would need receipt for this
-                'is_pool_related': is_pool
-            })
 
     if transfers:
         print(f"\nCollected {len(transfers)} transfers")
